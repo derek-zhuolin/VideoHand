@@ -1,0 +1,44 @@
+name: 想要一张新画面卡
+description: 有句话在现有 64 张卡里找不到对应的画面形状
+labels: ["新画面卡"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        画面卡是按**句子的形状**分的，不是按题材。所以提需求时最有用的信息是
+        「这句话在讲一种什么样的关系」，而不是「我想要一个好看的动画」。
+
+        先翻一下 [references/scenes-index.md](../../blob/main/references/scenes-index.md)，
+        确认现有的卡里确实没有能用的。
+
+  - type: textarea
+    id: sentence
+    attributes:
+      label: 那句话是什么
+      description: 贴真实的句子，别写抽象描述。
+      placeholder: 例：这三件事必须同时成立，缺一个整件事就不成立。
+    validations:
+      required: true
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: 它的"形状"是什么
+      description: |
+        用关系说，不用画面说。比如「一个结论由三个并列前提支撑」「两个东西此消彼长」
+        「一个循环，每绕一圈放大一点」。
+    validations:
+      required: true
+
+  - type: textarea
+    id: closest
+    attributes:
+      label: 现有哪张卡最接近，差在哪
+      description: 这一条能帮我判断是"加新卡"还是"改老卡"，很关键。
+      placeholder: 例：bracket-group-list 最接近，但它表达"归类"，我要的是"缺一不可"。
+
+  - type: textarea
+    id: sketch
+    attributes:
+      label: 手画个草图（可选）
+      description: 纸上随手画一个拍照传上来就行，比文字快十倍。

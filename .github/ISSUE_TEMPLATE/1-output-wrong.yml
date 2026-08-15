@@ -1,0 +1,62 @@
+name: 出片效果不对
+description: 成片里字挤在一起、断行断错、画面重叠、动效发硬——任何"看着不对"的问题
+labels: ["出片问题"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        描述"哪里不对"最快的方式是给一张截图。不用懂代码，看到什么写什么就行。
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 哪里不对
+      description: 一句话说清楚。比如「标题最后一个字单独掉到下一行」「两行字压在一起了」。
+      placeholder: 例：标题「x 上的正反馈」渲染成了两行，「馈」单独占一行。
+    validations:
+      required: true
+
+  - type: textarea
+    id: shot
+    attributes:
+      label: 截图
+      description: 直接把图拖进这个框。有问题的那一帧就行。
+    validations:
+      required: true
+
+  - type: textarea
+    id: script
+    attributes:
+      label: 你喂进去的文案
+      description: 原文照贴。中文的断行、字宽问题跟具体句子强相关，没有原文很难复现。
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: aspect
+    attributes:
+      label: 画幅
+      options:
+        - "9:16 竖屏"
+        - "16:9 横屏"
+        - "1:1 方形"
+        - 不确定
+    validations:
+      required: true
+
+  - type: input
+    id: card
+    attributes:
+      label: 出问题的画面卡（知道就填，不知道留空）
+      description: 卡名在 STORYBOARD.md 里，比如 title-sweep-underline。
+      placeholder: title-sweep-underline
+
+  - type: textarea
+    id: console
+    attributes:
+      label: 控制台里的 [hw-audit] 告警（如果有）
+      description: |
+        打开 playground 或预览页，按 F12 看 Console。有 `[hw-audit]` 开头的行就全贴过来——
+        这类问题往往已经被自检抓到了，贴上来能直接定位。
+      render: shell

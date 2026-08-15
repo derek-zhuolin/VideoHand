@@ -1,0 +1,44 @@
+name: 装不上 / agent 找不到这个 skill
+description: clone 完了但 agent 不认，或者跑起来报错
+labels: ["安装"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        最常见的原因只有一个：**skill 装在了 A 目录，而你用的 agent 只看 B 目录**。
+        每个 harness 都只认自己那个 skill 根目录。
+
+  - type: input
+    id: agent
+    attributes:
+      label: 你用的是哪个 agent
+      placeholder: 例：Claude Code / Codex / Cursor / 自建工作台
+    validations:
+      required: true
+
+  - type: input
+    id: path
+    attributes:
+      label: 你把仓库 clone 到了哪个路径
+      description: 完整路径。
+      placeholder: 例：~/.claude/skills/handdrawn
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 具体现象
+      description: |
+        「agent 说找不到 skill」还是「跑起来报错」？后者请贴完整报错。
+      render: shell
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: 先确认这两件事
+      options:
+        - label: "`node scripts/build-gallery.mjs` 能跑通，playground 打得开"
+        - label: 这个路径下不是软链，也不是另一份旧拷贝（`git -C <路径> log -1` 能看到最新提交）

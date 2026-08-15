@@ -1,0 +1,42 @@
+name: CI
+
+# 这个仓库的质量闸活在浏览器里 —— 卡片要真的被执行、字体要真的加载、时间轴要真的
+# 走一遍，HW.audit / auditLayout / auditMotion 才会说话。所以 CI 装一个 Chrome，
+# 把 64 张画面卡中英文各真跑一轮。
+#
+# 中文那轮不是附加的：中文字宽和断行规则跟拉丁文完全不同，孤字断行只在中文下暴露。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cards:
+    name: 全部画面卡真跑一遍
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: stable
+
+      - name: 跑卡片 + 布局审计（中英文各一轮）
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: node tools/ci-check.mjs
+
+      - name: 出问题时留下 playground 以便复现
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground
+          path: playground/index.html
+          retention-days: 7

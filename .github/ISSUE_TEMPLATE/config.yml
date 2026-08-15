@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 先翻一下踩坑记录
+    url: https://github.com/derek-zhuolin/VideoHand/blob/main/references/pitfalls.md
+    about: 每一条都是真出过一次的问题，按工作流顺序排的。你遇到的多半在里面。
+  - name: 64 张画面卡长什么样
+    url: https://github.com/derek-zhuolin/VideoHand/blob/main/references/scenes-index.md
+    about: 提"新画面卡"之前先看这里，确认现有的确实不够用。
