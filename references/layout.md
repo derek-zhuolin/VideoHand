@@ -1,0 +1,118 @@
+# 布局契约 · 卡片声明关系，舞台给坐标
+
+**一句话规矩：卡里不许出现像素数字。** 全部走安全区的比例。
+
+这不是洁癖——写死坐标的卡换个画幅就散架，而且没人会发现，因为它在 16:9 下看着好好的。
+
+---
+
+## 1 · 舞台
+
+```js
+var S = HW.stage(root, { w: 1080, h: 1920 });
+```
+
+拿到的 `S` 身上有：
+
+| 属性 | 是什么 |
+|---|---|
+| `S.safe` | 安全区 `{x, y, w, h, cx, cy, x2, y2}` —— **所有东西必须落在里面** |
+| `S.frame` | 整幅画布，只有全幅转场（撕纸、跑马灯）才准用，且要标 `bleed: true` |
+| `S.W / S.H / S.short` | 画布宽 / 高 / 短边 |
+| `S.portrait` | 竖屏吗（`H > W * 1.05`） |
+
+安全区 = 四边留 `min(W,H) × 0.075`，**底部再扣 `H × 0.16` 给字幕带**。这一扣已经算进 `S.safe` 了，卡片不用自己记。
+
+## 2 · 字号走分级，不写 px
+
+```js
+S.type("hero")     // 短边 × 0.30 —— one-word-explode 那种独字
+S.type("display")  // × 0.14
+S.type("title")    // × 0.085
+S.type("body")     // × 0.052
+S.type("label")    // × 0.040
+S.type("note")     // × 0.034
+```
+
+一般连这个都不用直接调——`S.boxText` 收 `role` 参数。
+
+## 3 · 槽位：声明关系，系统决定轴向
+
+**这是「同一张卡三种画幅都成立」的关键。** 参数一律是安全区的**比例**。
+
+| API | 横屏 | 竖屏 |
+|---|---|---|
+| `S.slots.center(fw, fh, {dy})` | 居中一格 | 同左 |
+| `S.slots.rows(n, {h, gap, w})` | n 行 | 同左 |
+| `S.slots.cols(n, {w, gap, h})` | n 列 | 同左 |
+| `S.slots.split(n)` | **左右**对分 | **上下**堆叠 |
+| `S.slots.series(n)` | **横向**链，箭头朝右 | **纵向**链，箭头朝下 |
+| `S.slots.grid(n)` | 偏宽的列数 | 偏高的行数 |
+| `S.slots.radial(n, {r, w, h})` | 椭圆轨道 | 同左（轨道随画幅拉伸） |
+| `S.slots.ladder(n)` | 递升台阶 | 同左 |
+| `S.slots.scatter(n)` | 确定性抖动散布 | 同左 |
+
+`series()` 返回 `{slots, axis, dir}`，箭头朝向直接读 `dir`，不用自己判断画幅。
+
+`radial()` 返回的数组额外挂了 `.rx / .ry / .at(angle, k)`——要在两个节点**之间**放东西（比如环形箭头），用 `at()` 取轨道上的点，别取两点连线的中点（那会掉进环心）。
+
+## 4 · 文字入框是强制的
+
+```js
+S.boxText(slot, str, { role: "title", maxLines: 2 })
+```
+
+- 内边距 = `min(w,h) × 0.12`（可用 `pad` 覆盖）
+- **自动缩字号到装得下为止**，不是可选项
+- 返回和 `S.words()` 一样的 handle，编排器照用
+
+要换字体（比如终端的等宽）**必须在这里声明** `font: "ui-monospace, ..."`，不许事后改 `style.fontFamily`——适配是按声明时的字体度量算的，事后换字体等于白算。
+
+自由文字（不在框里的）才用 `S.words()` / `S.text()`。
+
+## 5 · 标注锚定到它标注的东西
+
+```js
+S.below(target, { gap: 0.03, w: 0.6, h: 0.1 })
+S.above(target, ...) / S.leftOf(target, ...) / S.rightOf(target, ...)
+```
+
+`target` 可以是文字元素，也可以是形状（取 SVG bbox）。**两个轴都会夹进安全区。**
+
+维恩图的标签写 `S.below(圆)` 就永远压不到圆弧上——写死 `cy + 250` 就会。
+
+## 6 · 素材位
+
+```js
+var m = S.media(slot, 16/9, { frame: true });
+// m.rect 给 <img> / <video> 定位；m.frame 是手绘相框
+```
+
+- **contain**：按素材真实比例缩进槽位，完整不裁切
+- 外面套一圈 rough.js 手绘相框（默认开）——这是照片和纸面缝合的关键，关掉会像贴上去的异物
+
+## 7 · 三道自检（建卡后必跑）
+
+```js
+HW.audit(S)                 // 建了但没交给编排器的形状/文字（它们永远不可见）
+HW.auditLayout(S)           // t=0 时越界 / 文字出框
+HW.auditMotion(S, tl)       // 扫全时间线，抓动画途中才越界的
+```
+
+第三道是有原因的：门滑开、盖子翻转、碎片飞出，**在 t=0 全都还老实待着**。只测第一帧的审计看不见它们。
+
+出血是显式决定：`S.add(d, { bleed: true })` 才允许出安全区，审计会跳过它。
+
+---
+
+## 常见错法 → 正确写法
+
+| 错 | 对 |
+|---|---|
+| `x: 960` | `x: S.safe.cx` |
+| `size: 64` | `role: "body"` |
+| `S.text(str, {...})` 放框里 | `S.boxText(slot, str, {role})` |
+| 标签写 `cy + 250` | `S.below(target, {gap: 0.03})` |
+| 事后 `el.style.fontFamily = ...` | `S.boxText(..., { font: "..." })` |
+| 环形箭头放两点中点 | `cells.at(midAngle, 1.0)` |
+| 竖屏还横着排 | `S.slots.series(n)` 读 `dir` |

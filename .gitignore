@@ -1,0 +1,13 @@
+# Generated gallery
+gallery/
+
+# Film projects built with this skill
+films/
+
+# Credentials — never commit
+.env
+.env.*
+
+# OS / editor noise
+.DS_Store
+node_modules/

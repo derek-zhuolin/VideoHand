@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- head 只给源文件当元数据；运行时克隆 <template> -->
+  </head>
+  <body>
+    <template>
+      <!-- ⚠️ kit 必须引在 <template> 内。引在 template 外不生效（实测：探针拿不到）。 -->
+      <script src="assets/vendor/hw-kit.js"></script>
+
+      <style>
+        /* ── 字体：全片一份放 assets/fonts/，每帧各自声明（lint 要求）── */
+        @font-face {
+          font-family: "Caveat";
+          src: url("assets/fonts/Caveat-700-latin.woff2") format("woff2");
+          font-weight: 700;
+          font-display: block;
+        }
+        @font-face {
+          font-family: "Ma Shan Zheng";
+          src: url("assets/fonts/MaShanZheng-subset.woff2") format("woff2");
+          font-weight: 400;
+          font-display: block;
+        }
+        *,
+        *::before,
+        *::after {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          background: transparent;
+          overflow: hidden;
+        }
+
+        /* ── 配色：单一来源，见 references/palette.md。卡里禁止出现 hex ── */
+        #frame-root {
+          --hw-paper: #fffffc;
+          --hw-ink: #003e1f;
+          --hw-ink-soft: rgba(0, 62, 31, 0.68);
+          --hw-accent: #53a548; /* 只做笔画，不做文字（2.75:1 过不了 check） */
+          --hw-accent-ink: #3c7a33; /* 要绿色文字用这个（5.2:1） */
+          --hw-font-print: "Caveat", "Ma Shan Zheng", cursive;
+
+          position: relative;
+          width: 1920px;
+          height: 1080px;
+          overflow: hidden;
+          background: transparent; /* 纸面由主合成的 #paper clip 常驻 */
+          font-family: var(--hw-font-print);
+        }
+      </style>
+
+      <!-- 帧根：空的。所有笔画由 HW.stage 建，卡片只写配置。
+           注意：运行时会剥掉这个 id，换成 data-hf-authored-id —— 所以选根一律走 HW.el()。 -->
+      <div id="frame-root" data-composition-id="sN" data-width="1920" data-height="1080"></div>
+
+      <script>
+        (function () {
+          window.__timelines = window.__timelines || {};
+
+          /* ═══════════ 改这里：本帧内容 ═══════════ */
+          var CFG = {
+            title: "一句话标题",
+            note: "一句注释",
+            seed: 7, /* 每帧换一个 seed，抖动相位不同（确定性：同 seed 同结果）*/
+          };
+          var DUR = 6.0; /* ← 必须 = 主合成里该帧的 data-duration */
+          /* ═══════════════════════════════════════ */
+
+          var S = HW.stage("#frame-root");
+          var tl = gsap.timeline({ paused: true });
+
+          /* ── 布局：从 HW.slots 取槽位，别手写坐标 ── */
+          var slot = HW.slots.center(1180, 300, { dy: -40 })[0];
+
+          /* ── 笔画：HW.* 出 d，S.add 落到 svg（定位走外层 g，boil 不会冲掉）── */
+          var box = S.add(HW.rect(slot.w, slot.h, { seed: CFG.seed }), { x: slot.x, y: slot.y });
+          var title = S.words(CFG.title, { cx: 960, y: slot.y + 82, size: 96, w: 1400 });
+          var under = S.add(HW.wave(760, { seed: CFG.seed + 3 }), { x: 580, y: slot.y + slot.h + 46, ink: "accent" });
+          var note = S.words(CFG.note, { cx: 960, y: slot.y + slot.h + 92, size: 52, w: 1200, color: "var(--hw-ink-soft)" });
+
+          /* ── 编排：定律① 描线 → 定律③ 逐词 → 收尾 ── */
+          HW.draw(tl, box, { at: 0.32 });
+          HW.wordsIn(tl, title, { at: 0.78 });
+          HW.draw(tl, under, { at: 1.72 });
+          HW.wordsIn(tl, note, { at: 2.0, step: 0.05 });
+
+          /* ── 定律② 沸腾呼吸（甜区默认值，别传大 amp）── */
+          HW.boil(tl, [box, under], { seed: CFG.seed });
+
+          /* ── 有进必有出 ── */
+          HW.wordsOut(tl, title, { at: DUR - 0.72 });
+          HW.fadeOut(tl, [note.el], { at: DUR - 0.6 });
+
+          HW.frame(tl, "#frame-root", DUR);
+          window.__timelines["sN"] = tl; /* ← id 与 data-composition-id 一致 */
+        })();
+      </script>
+    </template>
+  </body>
+</html>

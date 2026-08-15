@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en" translate="no" class="notranslate">
+<head>
+<meta charset="utf-8" />
+<!-- The page draws its own text and measures it to place rings and strikes. A browser
+     translation swaps the span contents after those measurements are taken, so annotations
+     land on the wrong words — and the substituted characters usually fall outside the font
+     subset, which is why half the line turns into a system gothic. Opt out entirely. -->
+<meta name="google" content="notranslate" />
+<title>Handdrawn — Excalidraw base playground</title>
+<style>
+  /* Excalifont — Excalidraw's own Latin typeface, SIL OFL. */
+  @font-face {
+    font-family: "Excalifont";
+    src: url(FONT_DATA_URI) format("woff2");
+    font-weight: 400;
+    font-display: block;
+  }
+  /* Xiaolai 小赖字体 — the CJK face Excalidraw itself ships, SIL OFL.
+     Subset here to the characters this page actually draws. */
+  @font-face {
+    font-family: "Xiaolai";
+    src: url(CJK_DATA_URI) format("woff2");
+    font-weight: 400;
+    font-display: block;
+  }
+  :root {
+    --paper: #FFFFFC; --ink: #003E1F; --soft: rgba(0,62,31,.68);
+    --accent: #53A548; --accent-ink: #3C7A33;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 15px/1.6 "Excalifont", "Xiaolai", -apple-system, "PingFang SC", sans-serif;
+    background-image: radial-gradient(rgba(0,62,31,.10) 1px, transparent 1.4px);
+    background-size: 26px 26px;
+    padding: 36px 28px 90px;
+  }
+  header { max-width: 1640px; margin: 0 auto 22px; }
+  h1 { font-size: 34px; letter-spacing: .01em; }
+  .sub { color: var(--soft); margin-top: 6px; font-size: 15px; max-width: 70ch; }
+  .panel {
+    max-width: 1640px; margin: 18px auto 26px; padding: 16px 18px;
+    border: 2px solid rgba(0,62,31,.22); border-radius: 14px;
+    display: flex; gap: 26px; flex-wrap: wrap; align-items: center;
+    background: rgba(255,255,252,.7);
+  }
+  .ctl { display: flex; align-items: center; gap: 9px; font-size: 14px; }
+  .ctl label { color: var(--soft); white-space: nowrap; }
+  .ctl output { min-width: 34px; font-variant-numeric: tabular-nums; text-align: right; }
+  input[type=range] { width: 150px; accent-color: var(--accent); }
+  select, button {
+    font: inherit; padding: 6px 12px; border-radius: 9px; cursor: pointer;
+    border: 2px solid rgba(0,62,31,.22); background: var(--paper); color: var(--ink);
+  }
+  button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .grid {
+    max-width: 1640px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cellmin, 300px), 1fr)); gap: 24px;
+  }
+  .cell { border: 2px solid rgba(0,62,31,.2); border-radius: 14px; overflow: hidden; background: var(--paper); }
+  .cell.err { border-color: #c0392b; }
+  .view { position: relative; width: 100%; aspect-ratio: var(--ar, 9/16); overflow: hidden; cursor: zoom-in; background: var(--paper); }
+  .stage { position: absolute; top:0; left:0; transform-origin: 0 0; }
+  .safeguide { position:absolute; border:1.5px dashed rgba(83,165,72,.55); pointer-events:none; display:none; }
+  body.guides .safeguide { display:block; }
+  .meta { padding: 11px 14px 14px; border-top: 2px solid rgba(0,62,31,.14); }
+  .nm { font-weight: 400; font-size: 17px; }
+  .ln { color: var(--soft); font-size: 14px; margin-top: 3px; }
+  .note { color: var(--accent-ink); font-size: 12.5px; margin-top: 6px; }
+  .tags { margin-top: 8px; display:flex; gap:6px; flex-wrap: wrap; }
+  .tag { font-size: 12px; padding: 2px 10px; border-radius: 20px; border: 1.5px solid rgba(0,62,31,.2); color: var(--soft); }
+  .tag.new { border-color: var(--accent); color: var(--accent-ink); }
+  .fail { padding: 10px 14px; color: #c0392b; font-size: 12px; font-family: ui-monospace, monospace; word-break: break-all; }
+  dialog { border:none; border-radius:16px; padding:0; background: var(--paper); max-width: 96vw; }
+  dialog::backdrop { background: rgba(0,62,31,.55); }
+  dialog .view { width: min(1500px, 92vw); cursor: zoom-out; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Handdrawn — Excalidraw base</h1>
+  <div class="sub">
+    Shapes now render through <b>rough.js</b>, the engine Excalidraw itself draws with, and type is
+    set in <b>Excalifont</b>. Every cell runs its card's real code. Each cell keeps its own phase so
+    the wall is never blank all at once. Drag the sliders to dial the stroke feel — cards rebuild live.
+  </div>
+</header>
+
+<div class="panel">
+  <div class="ctl"><label>roughness</label><input id="rough" type="range" min="0" max="3" step="0.05" value="1.05"><output id="roughV">1.05</output></div>
+  <div class="ctl"><label>bowing</label><input id="bow" type="range" min="0" max="4" step="0.1" value="1.4"><output id="bowV">1.4</output></div>
+  <div class="ctl"><label>stroke</label><input id="sw" type="range" min="1" max="8" step="0.25" value="4"><output id="swV">4</output></div>
+  <div class="ctl"><label>fill</label>
+    <select id="fill">
+      <option value="hachure">hachure</option>
+      <option value="cross-hatch">cross-hatch</option>
+      <option value="zigzag">zigzag</option>
+      <option value="dots">dots</option>
+      <option value="dashed">dashed</option>
+      <option value="solid">solid</option>
+    </select>
+  </div>
+  <div class="ctl"><label>hachure gap</label><input id="gap" type="range" min="4" max="26" step="1" value="9"><output id="gapV">9</output></div>
+  <div class="ctl"><label>aspect</label>
+    <select id="aspect">
+      <option value="9:16">9:16 竖屏</option>
+      <option value="16:9">16:9 横屏</option>
+      <option value="1:1">1:1 方图</option>
+    </select>
+  </div>
+  <button id="guides">safe area</button>
+  <button id="lang">中文示例</button>
+  <button id="phase" class="on">per-cell phase</button>
+  <button id="reset">reset</button>
+</div>
+
+<div class="grid" id="grid"></div>
+<dialog id="zoom"><div class="view"><div class="stage" id="zoomStage"></div></div></dialog>
+
+<script>ROUGH_JS</script>
+<script>GSAP_JS</script>
+<script>HW_KIT_JS</script>
+<script>CARDS_JS</script>
+<script>
+const LOOP = 7;
+/* One place decides canvas size. Cards read it off the stage, never from a constant. */
+const ASPECTS = {
+  "9:16": { w: 1080, h: 1920, cell: 300 },
+  "16:9": { w: 1920, h: 1080, cell: 360 },
+  "1:1":  { w: 1440, h: 1440, cell: 320 },
+};
+let ASPECT = "9:16";
+const AR = () => ASPECTS[ASPECT];
+const grid = document.getElementById("grid");
+const built = [];
+let phaseOn = true;
+
+const K = {
+  roughness: 1.05, bowing: 1.4, width: 4, fillStyle: "hachure", hachureGap: 9,
+};
+
+function tokens(el) {
+  el.style.setProperty("--hw-paper", "#FFFFFC");
+  el.style.setProperty("--hw-ink", "#003E1F");
+  el.style.setProperty("--hw-ink-soft", "rgba(0,62,31,.68)");
+  el.style.setProperty("--hw-accent", "#53A548");
+  el.style.setProperty("--hw-accent-ink", "#3C7A33");
+  el.style.setProperty("--hw-font-print", '"Excalifont", "Xiaolai", -apple-system, "PingFang SC", sans-serif');
+  el.style.fontFamily = "var(--hw-font-print)";
+}
+
+/* Push the panel values into the kit before each build. */
+function applyKnobs() {
+  HW.setRough({ roughness: K.roughness, bowing: K.bowing, hachureGap: K.hachureGap });
+  HW.setStrokeWidths(K.width);
+  HW.setFillStyle(K.fillStyle);
+}
+
+let LANG = "en";
+/* Cards carry both languages; L() picks one. Anything that is not a {en, zh} pair passes
+   through untouched, so a card can stay monolingual where that is correct (a shell command). */
+const L = (v) => (v && typeof v === "object" && !Array.isArray(v) && ("en" in v || "zh" in v)) ? (v[LANG] ?? v.en) : v;
+window.__L = L;
+
+function build(card, stage, seed) {
+  const a = AR();
+  stage.innerHTML = "";
+  stage.style.width = a.w + "px";
+  stage.style.height = a.h + "px";
+  tokens(stage);
+  applyKnobs();
+  const S = HW.stage(stage, { w: a.w, h: a.h });
+  const tl = gsap.timeline({ paused: true });
+  card.build(S, tl, card.cfg, seed, 6.5, L);
+  const au = HW.audit(S);
+  if (au.total) console.warn(`${card.name}: ${au.shapes} shape(s) and ${au.words} word(s) created but never animated — they stay hidden`);
+  /* Two passes, because they catch different failures: auditLayout sees the first frame,
+     auditMotion seeks the timeline and sees everything that travels. A door only leaves the
+     page at 1.4s, and the static check is looking at it while it is still shut. */
+  const esc = HW.auditLayout(S).concat(HW.auditMotion(S, tl));
+  if (esc.length) console.warn(`${card.name}: ${esc.length} element(s) outside the safe area — ` +
+    esc.slice(0, 4).map((e) => `${e.what} by ${e.by}px`).join("; "));
+  drawGuide(stage, S);
+  return { tl, escapes: esc.length };
+}
+
+function drawGuide(stage, S) {
+  const g = document.createElement("div");
+  g.className = "safeguide";
+  g.style.left = S.safe.x + "px";
+  g.style.top = S.safe.y + "px";
+  g.style.width = S.safe.w + "px";
+  g.style.height = S.safe.h + "px";
+  stage.appendChild(g);
+}
+
+/* Text fitting measures real glyph widths, so it MUST run after the webfont is live.
+   Building before document.fonts.ready sizes everything against the fallback face and the
+   text reflows — and overflows its box — the moment Excalifont arrives. */
+document.fonts.ready.then(() => {
+  document.documentElement.style.setProperty("--ar", ASPECT.replace(":", "/"));
+  document.documentElement.style.setProperty("--cellmin", AR().cell + "px");
+  buildAll();
+  startLoop();
+});
+
+function buildAll() {
+CARDS.forEach((card, idx) => {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  const isNew = /^[JKLNOP]/.test(card.family);
+  cell.innerHTML =
+    '<div class="view"><div class="stage"></div></div>' +
+    '<div class="meta"><div class="nm">' + card.name + '</div>' +
+    '<div class="ln">' + card.line + '</div>' +
+    (card.note ? '<div class="note">' + card.note + '</div>' : '') +
+    '<div class="tags"><span class="tag">' + card.family + '</span>' +
+    (card.src === "wired" ? '<span class="tag new">new — from wired-elements</span>' :
+      isNew ? '<span class="tag new">new — from MotionSet</span>' : '<span class="tag">existing</span>') +
+    '</div></div>';
+  grid.appendChild(cell);
+
+  const view = cell.querySelector(".view");
+  const stage = cell.querySelector(".stage");
+  stage.setAttribute("translate", "no");
+  stage.classList.add("notranslate");
+  const fit = () => { stage.style.transform = "scale(" + view.clientWidth / AR().w + ")"; };
+  fit();
+  new ResizeObserver(fit).observe(view);
+
+  const rec = { card, stage, cell, seed: 7 + idx * 3, tl: null, phase: (idx * 0.83) % LOOP };
+  built.push(rec);
+  rebuild(rec);
+
+  view.addEventListener("click", () => {
+    const dlg = document.getElementById("zoom");
+    const zs = document.getElementById("zoomStage");
+    const zv = dlg.querySelector(".view");
+    dlg.showModal();
+    zs.style.width = AR().w + "px"; zs.style.height = AR().h + "px";
+    zs.style.transform = "scale(" + zv.clientWidth / AR().w + ")";
+    try {
+      const t2 = build(card, zs, rec.seed).tl;
+      const start = performance.now();
+      const tick = () => {
+        if (!dlg.open) return;
+        t2.time(Math.min(((performance.now() - start) / 1000) % LOOP, t2.duration()));
+        requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (e) { zs.textContent = e.message; }
+  });
+});
+}
+
+document.getElementById("zoom").addEventListener("click", (e) => {
+  if (e.target.id === "zoom") e.target.close();
+});
+
+function rebuild(rec) {
+  rec.cell.classList.remove("err");
+  const old = rec.cell.querySelector(".fail");
+  if (old) old.remove();
+  try {
+    const r = build(rec.card, rec.stage, rec.seed);
+    rec.tl = r.tl;
+    if (r.escapes) rec.cell.classList.add("err");
+  } catch (e) {
+    rec.tl = null;
+    rec.cell.classList.add("err");
+    const f = document.createElement("div");
+    f.className = "fail";
+    f.textContent = "✗ " + e.message;
+    rec.cell.appendChild(f);
+    console.error(rec.card.name, e);
+  }
+}
+
+/* One rAF for the whole wall, but each cell reads the clock at its own offset — otherwise
+   every card is mid-entrance at the same moment and the wall goes blank once per cycle. */
+/* Diagnostic hook: freeze every card at a chosen point so composition can be judged
+   without catching cards mid-entrance. */
+window.__freezeAt = (t) => { frozen = t; };
+let frozen = null;
+
+function startLoop() {
+  const t0 = performance.now();
+  (function loop() {
+    const base = (performance.now() - t0) / 1000;
+    for (const b of built) {
+      if (!b.tl) continue;
+      const t = frozen !== null ? Math.min(frozen, b.tl.duration()) : (base + (phaseOn ? b.phase : 0)) % LOOP;
+      try { b.tl.time(Math.min(t, b.tl.duration())); } catch (e) {}
+    }
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* Controls */
+function wire(id, key, outId, fmt) {
+  const el = document.getElementById(id), out = document.getElementById(outId);
+  el.addEventListener("input", () => {
+    K[key] = parseFloat(el.value);
+    out.textContent = fmt ? fmt(el.value) : el.value;
+    built.forEach(rebuild);
+  });
+}
+wire("rough", "roughness", "roughV");
+wire("bow", "bowing", "bowV");
+wire("sw", "width", "swV");
+wire("gap", "hachureGap", "gapV");
+document.getElementById("fill").addEventListener("change", (e) => {
+  K.fillStyle = e.target.value;
+  built.forEach(rebuild);
+});
+function applyAspect() {
+  const a = AR();
+  document.documentElement.style.setProperty("--ar", ASPECT.replace(":", "/"));
+  document.documentElement.style.setProperty("--cellmin", a.cell + "px");
+  built.forEach((b) => { b.stage.style.width = a.w + "px"; b.stage.style.height = a.h + "px"; });
+  built.forEach(rebuild);
+  built.forEach((b) => {
+    const v = b.cell.querySelector(".view");
+    b.stage.style.transform = "scale(" + v.clientWidth / a.w + ")";
+  });
+}
+document.getElementById("aspect").addEventListener("change", (e) => {
+  ASPECT = e.target.value;
+  applyAspect();
+});
+document.getElementById("guides").addEventListener("click", (e) => {
+  document.body.classList.toggle("guides");
+  e.target.classList.toggle("on", document.body.classList.contains("guides"));
+});
+document.getElementById("lang").addEventListener("click", (e) => {
+  LANG = LANG === "en" ? "zh" : "en";
+  e.target.textContent = LANG === "en" ? "中文示例" : "English";
+  e.target.classList.toggle("on", LANG === "zh");
+  built.forEach(rebuild);
+});
+document.getElementById("phase").addEventListener("click", (e) => {
+  phaseOn = !phaseOn;
+  e.target.classList.toggle("on", phaseOn);
+});
+document.getElementById("reset").addEventListener("click", () => {
+  K.roughness = 1.05; K.bowing = 1.4; K.width = 4; K.fillStyle = "hachure"; K.hachureGap = 9;
+  document.getElementById("rough").value = 1.05; document.getElementById("roughV").textContent = "1.05";
+  document.getElementById("bow").value = 1.4; document.getElementById("bowV").textContent = "1.4";
+  document.getElementById("sw").value = 4; document.getElementById("swV").textContent = "4";
+  document.getElementById("gap").value = 9; document.getElementById("gapV").textContent = "9";
+  document.getElementById("fill").value = "hachure";
+  built.forEach(rebuild);
+});
+</script>
+</body>
+</html>
