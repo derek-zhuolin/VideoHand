@@ -1448,8 +1448,26 @@
         return { rect: rect, frame: frame };
       },
 
-      /* Add strokes. d may be a string or an array of strings; returns a path or an array of paths. */
+      /* Add strokes. d may be a string or an array of strings; returns a path or an array of paths.
+         opts.ghost: 先垫一层同形虚框（0.18 透明度 static），描线动画在它上面跑 ——
+         描线中段不再被读成"消失的空框"。同 seed 同抖动，虚框和实框完全重叠。 */
       add: function (d, opts) {
+        opts = opts || {};
+        if (opts.ghost) {
+          var gopts = {};
+          for (var gk in opts) if (gk !== "ghost") gopts[gk] = opts[gk];
+          gopts.static = true;
+          gopts.ink = "thin";
+          var gd = Object.prototype.toString.call(d) === "[object Array]" ? d : [d];
+          for (var gi = 0; gi < gd.length; gi++) {
+            var gp = mkPath(gd[gi], gopts);
+            if (!gp) continue;
+            var gpArr = Object.prototype.toString.call(gp) === "[object Array]" ? gp : [gp];
+            for (var gj = 0; gj < gpArr.length; gj++) {
+              if (gpArr[gj].style) gpArr[gj].style.opacity = "0.18";
+            }
+          }
+        }
         if (Object.prototype.toString.call(d) === "[object Array]") {
           var out = [];
           for (var i = 0; i < d.length; i++) {
