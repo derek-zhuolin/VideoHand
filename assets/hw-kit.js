@@ -27,6 +27,22 @@
   var NS = "http://www.w3.org/2000/svg";
   var HW = {};
 
+  /* 引擎版本。**它存在的唯一理由是让"带着旧引擎出片"这件事能被看见。**
+
+     这份 kit 会被复制到两个地方，两处都会悄悄漂移：
+       ① 各个 agent 的 skill 目录（Claude Code / WorkBuddy / Codex / Cursor …）
+       ② **每一支片自己的 assets/**（建片时 copy 一份进去）
+
+     ② 更常发生也更难发现：引擎在仓库里修好了，片目录里那份还是老的，
+     于是"改完了怎么还是老问题"。实测就这么绕了很久 —— 改完 kit 的第一次重渲毫无变化，
+     因为片子读的是它自己那份三小时前的拷贝。
+
+     光靠这个字符串不够（人会忘记 bump），所以真正的检查是
+     `scripts/portability-lint.mjs` 里按**内容哈希**比对片子的 assets/ 和 skill 的 assets/。
+     片子从来不该改引擎，所以"不一样"＝"旧了"，不需要判断谁新。
+     这个版本号只是让人和日志读得懂。 */
+  HW.VERSION = "2.1.0";
+
   /* ═══════════ 0 · Deterministic noise ══════════════════════════ */
 
   HW.hash = function (n, seed) {

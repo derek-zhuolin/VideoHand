@@ -271,7 +271,7 @@ handdrawn/
 │   ├── layout.md               # 安全区 / 画幅自适应 / 槽位 / 入框契约
 │   ├── palette.md              # 配色与对比度算账、字体子集化
 │   ├── transitions.md          # 8 种手绘转场
-│   ├── pitfalls.md             # 坑位全录（39 条实测，第七节＝合成之后才发作的）
+│   ├── pitfalls.md             # 坑位全录（40 条实测，第七节＝合成之后才发作的）
 │   └── voice-pipeline.md       # 配音契约（产物契约，不绑 TTS 厂商）
 ├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
 ├── tools/                      # install.sh / doctor.mjs（装机）+ gate.mjs / frame-audit.py（像素闸）

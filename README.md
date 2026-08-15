@@ -120,6 +120,27 @@ clone 的好处是**每一份都能 `git log` 自证版本**，一眼就知道�
 git -C ~/.claude/skills/handdrawn pull
 ```
 
+### 漂移这件事，别指望自己发现
+
+"坏了就删"防不住 —— **因为你看不出它坏了**。实测过一次：本机同时有两份 handdrawn，
+目录结构、文件名、大部分内容都一模一样，只有一份带着已经修好的 bug。
+差别要**渲一支片出来**才看得见。
+
+所以规矩不是"发现坏了就删"，是**让每一份都必须能自证版本**：
+
+| 规矩 | 谁来查 |
+|---|---|
+| skill 目录里只允许有 git 仓库，不允许有实体拷贝 | `node tools/doctor.mjs` 的副本盘点 |
+| 每支片带的 `assets/` 必须跟 skill 那份逐字节一致 | `portability-lint` 第四条，按内容哈希比 |
+
+第二条尤其容易中招：建片时会把 `assets/` 复制进片目录，**改完 skill 的引擎不同步过去，
+重渲毫无变化**。人会以为"没修好"，回头去改本来已经对的代码。这个坑今天刚踩过。
+
+```bash
+node tools/doctor.mjs                       # 全机副本盘点：谁是仓库、谁是哪版
+node scripts/portability-lint.mjs <片目录>   # 这支片带的引擎是不是最新的
+```
+
 > 实测：同一份 `SKILL.md` 用 `deepseek-v4-flash` 跑，闸和字幕契约都能准确复述。
 > 换模型不用改 skill。DeepSeek / GLM / Kimi 这类一般是把 harness 指到别的 API 端点，
 > skill 目录不变，装一次就够了。
@@ -261,7 +282,7 @@ handdrawn/
 │   ├── layout.md               # 安全区 / 画幅自适应 / 槽位 / 入框契约
 │   ├── palette.md              # 配色与对比度算账、字体子集化
 │   ├── transitions.md          # 8 种手绘转场
-│   ├── pitfalls.md             # 坑位全录（39 条实测，第七节＝合成之后才发作的）
+│   ├── pitfalls.md             # 坑位全录（40 条实测，第七节＝合成之后才发作的）
 │   └── voice-pipeline.md       # 配音契约（不绑定任何 TTS 厂商）
 ├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
 ├── tools/                      # install.sh / doctor.mjs / gate.mjs / frame-audit.py

@@ -37,8 +37,11 @@
  */
 
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
-import { join, resolve, relative } from "node:path";
+import { join, resolve, relative, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
+const SKILL_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const projectDir = resolve(process.argv[2] || ".");
 if (!existsSync(projectDir)) {
   console.error(`✗ 找不到片目录：${projectDir}`);
@@ -153,6 +156,50 @@ for (const file of frames) {
   if (kitAt >= 0 && tplAt >= 0 && kitAt < tplAt) {
     push(file, "hw-kit.js 引在 <template> 外面", "挪进 <template> 内。引在外面永远不执行，而且不报错。");
   }
+}
+
+/* ── ④ 片子带的引擎是不是仓库里那份 ─────────────────────────────────
+   建片时会把 assets/ 复制进片目录。**这份拷贝会悄悄漂移**，而且是最难发现的一种：
+   引擎在仓库里修好了，片目录里那份还是老的 —— 重渲毫无变化，人会以为"没修好"，
+   于是回头去改本来已经对的代码。实测绕了很久才发现读的根本不是同一份文件。
+
+   片子从来不该改引擎，所以"内容不一样"＝"旧了"，不用判断谁新谁旧。
+   按内容哈希比，不靠版本号 —— 版本号要人记得 bump，而人不会记得。 */
+const ENGINE_FILES = [
+  "assets/hw-kit.js",
+  "assets/hw-cards.js",
+  "assets/hw-trans.js",
+  "assets/vendor/rough.js",
+  "assets/vendor/gsap.min.js",
+];
+const sha = (p) => createHash("sha256").update(readFileSync(p)).digest("hex").slice(0, 12);
+const kitVersion = (p) => {
+  try {
+    return (readFileSync(p, "utf8").match(/HW\.VERSION\s*=\s*"([^"]+)"/) || [])[1] || "?";
+  } catch { return "?"; }
+};
+const drifted = [];
+for (const rel of ENGINE_FILES) {
+  const mine = join(projectDir, rel);
+  const canon = join(SKILL_DIR, rel);
+  if (!existsSync(canon)) continue;          // skill 里没有就不比
+  if (!existsSync(mine)) continue;           // 片子没带这份就不比（可能引的是别处）
+  if (sha(mine) !== sha(canon)) drifted.push(rel);
+}
+if (drifted.length) {
+  errors.push({
+    file: "assets/",
+    msg:
+      `片目录里的引擎跟 skill 那份不一致：${drifted.join("、")}` +
+      (drifted.includes("assets/hw-kit.js")
+        ? `（片 ${kitVersion(join(projectDir, "assets/hw-kit.js"))} / skill ${kitVersion(join(SKILL_DIR, "assets/hw-kit.js"))}）`
+        : ""),
+    fix:
+      "片子从来不该改引擎，所以不一样就是旧了。同步过去：\n" +
+      `      cp ${drifted.map((f) => join(SKILL_DIR, f)).join(" ")} ${join(projectDir, "assets")}/\n` +
+      "      （改完 skill 的引擎后必须做这一步，否则重渲毫无变化 —— " +
+      "片子读的是它自己那份旧拷贝，人会误以为「没修好」而回头改本来对的代码。）",
+  });
 }
 
 /* 跨文件：根 id 撞车 */

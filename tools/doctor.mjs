@@ -12,7 +12,7 @@
  * 并且**只报能修的东西**：每条都给一句可以直接粘贴的命令。
  */
 
-import { existsSync, statSync } from "node:fs";
+import { existsSync, statSync, readFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
@@ -109,24 +109,92 @@ if (existsSync(pg)) {
     "node " + join(SKILL, "scripts/build-gallery.mjs")
   );
 
-/* ── 6 · 装在 agent 认得的地方吗 ──────────────────────── */
+/* ── 6 · 全机副本盘点 ─────────────────────────────────────
+   这一节是一次真实事故换来的。本机同时存在两份 handdrawn：
+   `~/.claude/skills/` 那份是仓库（已修好），`~/.workbuddy/skills/` 那份是**实体拷贝**，
+   还带着坏掉的引擎。两份长得一模一样 —— 目录结构、文件名、甚至大部分内容都相同，
+   **唯一的差别要渲一支片出来才看得见**。
+
+   所以"坏了就删"防不住：你根本不知道哪份是坏的。
+   能防住的是**让每一份都必须能自证版本** —— git 仓库能 `git log`，实体拷贝不能。
+   于是规则变成一句可机检的话：**skill 目录里只允许有 git 仓库，不允许有实体拷贝。** */
 const home = process.env.HOME || "";
 const roots = [
   [".claude/skills", "Claude Code"],
   [".agents/skills", "通用 agents"],
+  [".workbuddy/skills", "WorkBuddy"],
   [".codex/skills", "Codex"],
   [".cursor/skills", "Cursor"],
+  [".config/crush/skills", "Crush"],
+  [".gemini/skills", "Gemini"],
 ];
-const seen = roots.filter(([r]) => existsSync(join(home, r, "handdrawn")));
-if (seen.length)
-  ok("装的位置", seen.map(([r, n]) => `${n}（~/${r}/handdrawn）`).join("、"));
-else
+
+const myVer =
+  (() => {
+    try {
+      return (
+        readFileSync(join(SKILL, "assets/hw-kit.js"), "utf8").match(
+          /HW\.VERSION\s*=\s*"([^"]+)"/
+        ) || []
+      )[1];
+    } catch {
+      return null;
+    }
+  })() || "?";
+
+const copies = [];
+for (const [rel, label] of roots) {
+  const dir = join(home, rel, "handdrawn");
+  if (!existsSync(dir)) continue;
+  const isRepo = existsSync(join(dir, ".git"));
+  const head = isRepo
+    ? sh(`git -C "${dir}" log --oneline -1 2>/dev/null`) || "?"
+    : null;
+  let ver = "?";
+  try {
+    ver =
+      (readFileSync(join(dir, "assets/hw-kit.js"), "utf8").match(
+        /HW\.VERSION\s*=\s*"([^"]+)"/
+      ) || [])[1] || "?";
+  } catch {}
+  copies.push({ label, dir, isRepo, head, ver });
+}
+
+if (!copies.length) {
   warn(
     "装的位置",
     `当前在 ${SKILL} —— 不在任何一个 agent 的 skill 目录下，agent 找不到它`,
     "把仓库直接 clone 进去（别复制、别软链，理由见 README）：\n" +
       "      git clone <repo> ~/.claude/skills/handdrawn"
   );
+} else {
+  /* `?` 是"读不出版本"，**不是"没问题"**。早一版把它跟一致的归成一类，
+     于是一份连版本都报不出的副本被打了勾 —— 这正是这一节要防的那种沉默。
+     读不出来就当成不一致，宁可多提醒一次。 */
+  const drift = copies.filter((c) => c.ver !== myVer);
+  for (const c of copies) {
+    const tag = c.isRepo ? c.head.slice(0, 7) : "非仓库";
+    const line = `${c.label.padEnd(12)} 引擎 ${c.ver.padEnd(7)} ${tag}`;
+    if (!c.isRepo)
+      bad(
+        "副本",
+        `${line}  ← 实体拷贝，说不出自己是哪个版本`,
+        `它可能带着一个已经修好的 bug，而你要渲一支片才看得见。换成仓库：\n` +
+          `      rm -rf "${c.dir}" && git clone <repo> "${c.dir}"`
+      );
+    else if (c.ver !== myVer)
+      warn(
+        "副本",
+        `${line}  ← ${c.ver === "?" ? "读不出引擎版本" : `引擎比这份（${myVer}）旧`}`,
+        `git -C "${c.dir}" pull`
+      );
+    else ok("副本", line);
+  }
+  if (!drift.length)
+    ok("副本一致性", `${copies.length} 份全是仓库，引擎都是 ${myVer}`);
+  else
+    console.error(""); // 让下面的提醒不贴着上一段
+}
 
 /* ── 输出 ─────────────────────────────────────────────── */
 const mark = { ok: "◇", warn: "ℹ", bad: "✗" };
