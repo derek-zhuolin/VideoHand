@@ -1,5 +1,8 @@
-# Generated gallery
+# 生成物：playground/index.html 由 scripts/build-gallery.mjs 从 shell.html + assets
+# 内联而成，2.2MB，每次重建都是一个全新的大文件。源在仓库里，产物不进版本库。
+# 看 playground：node scripts/build-gallery.mjs && open playground/index.html
 gallery/
+playground/index.html
 
 # Film projects built with this skill
 films/

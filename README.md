@@ -32,31 +32,31 @@ Excalifont / 小赖字体（Excalidraw 官方字体搭配）。
 
 需要 Node、ffmpeg，以及 [HyperFrames](https://hyperframes.heygen.com/)（`npx` 直接调，不用预装）。
 
-```bash
-git clone <this-repo> handdrawn
-```
-
-整个目录就是 skill 本身，**不绑定任何一家模型**。一条命令挂进本机所有 agent：
+整个目录就是 skill 本身，**不绑定任何一家模型**。直接 clone 进 agent 的 skill 目录：
 
 ```bash
-./tools/link-skill.sh          # 挂上 / 修复所有软链
-./tools/link-skill.sh --check  # 只看现状，不改动
+git clone <this-repo> ~/.claude/skills/handdrawn
 ```
 
-它会在每个存在的 skill 根目录（Claude Code / agents / WorkBuddy / Codex / Hermes /
-Crush / Devin / Gemini / Cursor）放一条**指向本仓库的软链**，没装的工具自动跳过。
+**仓库本体就放在 skill 目录里，不要软链、也不要复制。** 这样"唯一实体"和"agent 读到的
+那份"是同一个东西，改完 commit 就生效，不存在同步这一步。
 
-**为什么必须是软链，不能复制。** 复制会得到 N 份各自漂移的副本——改了一份，其余
-N-1 份还是老的，而你不知道哪个 agent 在用哪份。这个坑踩过：`~/.claude/skills/handdrawn`
-曾经指向一份工作台里的旧拷贝，于是「修好了但成片还是老问题」。软链之后，
-**在仓库里改 + commit，所有 agent 立刻同时生效，不存在同步这一步**。
+要装到别的 harness（agents / WorkBuddy / Codex / Hermes / Crush / Devin / Gemini /
+Cursor），各自再 clone 一份，靠 `git pull` 拉齐：
 
-脚本是幂等的，重复跑没有副作用。遇到**实体目录**会停下来报告而不是覆盖——那种目录
-可能有没进仓库的改动（也踩过：一份副本里藏着仓库没有的 `ghost` 功能）。
+```bash
+git -C ~/.agents/skills/handdrawn pull
+```
+
+> **别用复制，也别用软链。** 复制会得到 N 份各自漂移的副本——改了一份，其余 N-1 份
+> 还是老的，而你不知道哪个 agent 在用哪份。软链看似解决了漂移，但它把"指向哪里"变成
+> 一个看不见的状态：这个坑踩过，`~/.claude/skills/handdrawn` 曾经指向工作台里的一份
+> 旧拷贝，于是「仓库修好了、成片还是老问题」，排查了很久才发现根本不在同一份代码上。
+> git clone 的好处是每一份都能 `git log` 自证版本，问题一眼可见。
 
 > 实测：同一份 `SKILL.md` 用 `deepseek-v4-flash` 跑，四道闸和字幕契约都能准确复述。
 > 换模型不用改 skill。DeepSeek / GLM / Kimi 这类一般是把 harness 指到别的 API 端点，
-> skill 目录不变，所以上面挂一次就够了。
+> skill 目录不变，装一次就够了。
 
 验证装好了：
 
