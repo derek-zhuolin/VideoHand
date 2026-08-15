@@ -34,20 +34,21 @@ window.HWT = function (S, tl) {
     return out;
   }
 
-  /* 描线进场的 opacity 闸。HW.draw 只靠 strokeDasharray 藏形状，而粗圆头笔触在虚线相位上
-     会漏成一串圆点 —— 转场块和后出场的元素于是提前满屏显形。再加一道 opacity。 */
+  /* opacity 闸现在长在 HW.draw 里了（见 hw-kit.js 里那段注释）。
+     D 保留下来只为兼容已经写好的帧 —— 直接转交，不再自己加第二道闸。
+     加第二道会打架：两条 tween 同时管一个 opacity，seek 到边界上闪一下。 */
   function D(targets, o) {
-    o = o || {};
-    var els = flat(targets);
-    var r = HW.draw(tl, targets, o);
-    var at = o.at || 0, stag = o.stagger === undefined ? 0.08 : o.stagger;
-    gsap.set(els, { opacity: 0 });
-    els.forEach(function (el, i) { tl.set(el, { opacity: 1 }, at + i * stag); });
-    return r;
+    return HW.draw(tl, targets, o || {});
+  }
+  /* 到点亮起。用 fromTo 不用 tl.set —— raw set 不可回滚，直接 seek 到闸之前的时刻
+     仍然会看到亮着的画面（抓帧、Studio 拖动、快照都踩这个）。 */
+  function gate(els, at) {
+    tl.fromTo(els, { opacity: 0 },
+      { opacity: 1, duration: 0.001, ease: "none", immediateRender: true }, at);
   }
   function claimOn(els, at) {
     els.forEach(function (e) { HW.claim(e); });
-    tl.set(els, { opacity: 1 }, at);
+    gate(els, at);
   }
 
   /* ── 盖子的三种材料 ───────────────────────────────────────────── */
@@ -80,8 +81,8 @@ window.HWT = function (S, tl) {
     el.forEach(function (e) { HW.claim(e); });
     /* showAt 省略 = 揭开半，第 0 帧就该在；给了 = 盖上半，到点才放行。
        不按住的话这根线会从第 0 秒横在画面中间。 */
-    gsap.set(el, { opacity: showAt === undefined ? 1 : 0 });
-    if (showAt !== undefined) tl.set(el, { opacity: 1 }, showAt);
+    if (showAt === undefined) gsap.set(el, { opacity: 1 });
+    else gate(el, showAt);
     return el;
   }
 

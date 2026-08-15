@@ -63,10 +63,18 @@ open playground/index.html
 建帧红线：
 
 - **hw-kit.js / rough.js / gsap 的 `<script>` 必须引在 `<template>` 内**——引在外面永远不执行，且不报错
+- **`HW.stage` 必须收本帧的合成 id**：`HW.stage("#root", { w, h, id: "03-visualize" })`，
+  收尾写 `HW.frame(tl, S, DUR)`（收 stage，不收选择器）
+- **帧里的根选择器只能是 `#root`**，不许改名、不许挂 class 再从 class 起头写规则
+- **脚本和资产一律本地 + 根相对**：`assets/vendor/gsap.min.js`，不许 CDN、不许 `../`
 - 卡里**不许出现像素数字**，一律走 `S.safe` 的比例和 `S.type(role)`（见 `references/layout.md`）
 - 卡里**不许出现 hex**，一律 `var(--hw-*)`（见 `references/palette.md`）
 - 要动东西一律 `HW.host(el)`，别直接动 path——GSAP 会替换 transform 把 boil 抹掉
 - 界面证据类的卡（`screen-frame` / `terminal-scribble` / `chat-bubble-thread` / `tabs-switch`）每一行都要是**可读真字段**：真来源 + 真标题 + 真时间戳，数字现读。骨架灰条和装饰性几何体一律算占位符
+
+> 中间四条为什么是红线：它们**只在子合成被合进主合成之后才发作**，
+> 单帧预览和 playground 永远是对的。一次实测的后果是整支片手绘笔画全灭、
+> 七帧叠成一坨、两帧直接空白，而当时四道闸全绿。账见 `references/pitfalls.md` 第七节。
 
 ### 4 · 自检
 
@@ -80,24 +88,37 @@ HW.auditMotion(S, tl)  // 扫全时间线，抓动画途中才越界的
 
 第三道有必要：门滑开、盖子翻转、碎片飞出，**在第一帧全都还老实待着**。
 
-### 5 · 渲染前四道闸
+### 5 · 渲染前五道闸
 
 ```bash
-npm run check                         # 渲染错误 + 对比度
+node scripts/portability-lint.mjs <片目录>   # 跨平台（合成之后才发作的那一类）
+npm run check                         # 渲染错误 + 对比度 —— 连 Runtime 段一起看
 node scripts/scene-lint.mjs  <片目录>   # 选卡纪律（查 STORYBOARD，看不见画面）
 node scripts/motion-lint.mjs <片目录>   # 动效尺度
 node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面审计（随包在 tools/，工作台开跑时会自动拷进工程）
 ```
 
-**四个都得退出 0 才能渲。**
+**五个都得退出 0 才能渲。**
 
-前三道都只读代码和 STORYBOARD —— **它们看不见画面**。第四道抓帧判像素，
-真正让人一眼说「这不对」的三件事只有它查得出来：坠底、缝里空帧、字幕带空着。
+它们查的是**四个互不重叠的层**，缺一层就有一整类问题没人看：
+
+| 闸 | 看的是 | 漏了它会怎样 |
+|---|---|---|
+| portability-lint | 合成之后的结构（根 id、CSS 作用域、外链、`../`） | 单帧全对、成片画面全灭，且四道闸全绿 |
+| check（含 Runtime） | 浏览器真的报没报错 | 建帧抛异常 → 那一格成片里是一整段纯白 |
+| scene-lint | STORYBOARD 的选卡纪律 | 相邻重样、高能扎堆 |
+| motion-lint | 动效尺度 | 生硬、错峰读不出来 |
+| gate | 真实像素 | 坠底、缝里空帧、字幕带空着 |
+
+前面几道都只读源码 —— **它们看不见画面，也看不见运行时**。
+`check` 的 Runtime 段是唯一会告诉你"某一帧的脚本抛了异常"的地方，
+**别只看总退出码**：那一格什么都没有，前面建好的形状也一个都不会动。
 
 > 判闸一律看退出码，**不许 `命令 | tail -N`** —— 那拿到的是 tail 的 0，永远是「过」。
 
 > **为什么闸长这样、怎么给别的出片线套一套同样的闸**：见 `tools/README.md`。
-> 这条 skill 踩过的具体坑（版面、转场、验收）在 `references/pitfalls.md` 第六节。
+> 这条 skill 踩过的具体坑在 `references/pitfalls.md`：
+> 版面 / 转场 / 验收在第六节，**合成之后才发作的那一类在第七节**。
 
 ---
 
@@ -181,6 +202,10 @@ HW.captions(tl, S, [
   `HW.wrapZh` 会在标点和连词处断（中文没有词间空格，按字数硬折会把词劈开 ——
   实测出过「真实的观 / 点 / 细节」），但它只保证不劈词，**不负责替你把长句切短**。
 - **一条里只有一个重点词**（`key`）。全高亮等于没高亮。
+- **字号比主体明显小一档**（默认 `S.short * 0.044`，竖屏约 48px）。
+  以前是 0.052（约 56px）—— 两行中文几乎顶满整条带子，胶带被撑成一块板，抢主体。
+  字幕是跟读用的第二条通道，不是标题：扫一眼就该回到画面上。
+  长句别靠调大字号救，靠 `HW.wrapZh` 断成两行短句。
 
 ---
 
@@ -199,9 +224,10 @@ X.TI["paper-slide"](SEAM_IN);              // 开头：把上一格的盖子揭�
 X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 ```
 
-同时它还给出 `X.D(targets, o)` —— 带 opacity 闸的 `HW.draw`。
-`HW.draw` 只靠 `strokeDasharray` 藏形状，粗圆头笔触在虚线相位上会漏成一串圆点，
-后出场的元素于是提前满屏显形。**建帧里画任何东西都走 `X.D`，别直接用 `HW.draw`。**
+**opacity 闸现在长在 `HW.draw` 里，直接用就行。**
+以前这道闸在 `X.D` 里，规矩是「建帧里画任何东西都走 X.D，别直接用 HW.draw」——
+结果一支片七帧全忘了，转场涂抹从第 0 秒糊到最后。
+靠人记得绕开默认路径的规矩迟早会被忘掉，所以闸挪进了引擎；`X.D` 留着只为兼容。
 
 一格的两半互不知情，所以缝的账要在 STORYBOARD 里记清楚：
 哪条缝用哪种、SEAM SEED 是几。硬切两侧都不写。
@@ -217,6 +243,11 @@ X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 | 淡墨 | `rgba(0,62,31,.68)` |
 | 强调 | `#53A548` 马克笔绿——**只做笔画**，写字用 `#3C7A33` |
 | 字体 | Excalifont（拉丁）+ 小赖字体（中文，按本片字符重新子集化） |
+
+**这份配色的真源在 `hw-kit.js` 的 `HW.PALETTE`，不在帧的 CSS 里。**
+`HW.stage` 开场会把它内联写到根元素上，所以帧的 `<style>` 整段失效时笔画也还在。
+帧里那份 `#root { --hw-* }` 保留是为了可覆盖、可读 —— 读得到就用读到的。
+为什么要这么绕：`references/pitfalls.md` 第 35 条。
 
 动效三件套：**描线进场 + 沸腾抖动 + 逐词错峰**。boil 用默认值（`amp 0.5–0.6` / `rot 0.12–0.18` / `frameDrop 4`），再大会抖，再小会死。
 
@@ -240,10 +271,10 @@ handdrawn/
 │   ├── layout.md               # 安全区 / 画幅自适应 / 槽位 / 入框契约
 │   ├── palette.md              # 配色与对比度算账、字体子集化
 │   ├── transitions.md          # 8 种手绘转场
-│   ├── pitfalls.md             # 坑位全录（34 条实测）
+│   ├── pitfalls.md             # 坑位全录（39 条实测，第七节＝合成之后才发作的）
 │   └── voice-pipeline.md       # 配音契约（产物契约，不绑 TTS 厂商）
-├── scripts/                    # scene-lint / motion-lint / build-gallery
-├── tools/                      # gate.mjs + frame-audit.py（渲染前的像素闸）+ 方法论 README
+├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
+├── tools/                      # install.sh / doctor.mjs（装机）+ gate.mjs / frame-audit.py（像素闸）
 ├── templates/                  # 帧脚手架 + 字幕皮肤
 └── playground/index.html       # 64 格动图墙，双击就能看
 ```

@@ -18,7 +18,7 @@ window.CARDS = [
     family: "A opening",
     note: "absorbs logo-draw-out — variant: opening | series-outro",
     line: "Big type lights up word by word, a wavy marker line follows",
-    cfg: { title: { en: "Fifty-two ways to draw a shot", zh: "一句话，一张画面卡" }, variant: "opening" },
+    cfg: { title: { en: "Sixty-four ways to draw a shot", zh: "一句话，一张画面卡" }, variant: "opening" },
     build: function (S, tl, CFG, SEED, DUR) {
       var slot = S.slots.center(0.9, 0.26, { dy: -0.08 });
       var box = CFG.variant === "opening"
@@ -329,7 +329,7 @@ window.CARDS = [
     family: "J reveal",
     note: "MotionSet: mask reveal (125 files) — the covers are full-bleed by design",
     line: "The sheet tears open and the content shows through the rip",
-    cfg: { hidden: { en: "Fifty-two ways", zh: "五十二种画法" } },
+    cfg: { hidden: { en: "Sixty-four ways", zh: "六十四种画法" } },
     build: function (S, tl, CFG, SEED) {
       var slot = S.slots.center(0.84, 0.2);
       var inner = S.boxText(slot, pick(CFG.hidden), { role: "title", maxLines: 1 });
@@ -879,7 +879,7 @@ window.CARDS = [
     name: "timeline-thread", family: "D process",
     note: "migrated — rail follows the long axis of the frame",
     line: "One long drawn line crosses the frame, nodes lighting up along it",
-    cfg: { nodes: { en: ["Fixed formula", "Primitive kit", "52 cards"], zh: ["固定套路", "原语库", "五十二张卡"] } },
+    cfg: { nodes: { en: ["Fixed formula", "Primitive kit", "64 cards"], zh: ["固定套路", "原语库", "六十四张卡"] } },
     build: function (S, tl, CFG, SEED) {
       var nodes = pick(CFG.nodes);
       var down = S.portrait;
@@ -1234,7 +1234,7 @@ window.CARDS = [
     name: "progress-bar-fill", family: "F data",
     note: "migrated — set stuck:true for the high-energy blockage variant",
     line: "A drawn progress bar fills, or jams partway and refuses to move",
-    cfg: { ratio: 1, stuck: false, label: { en: "All 52 in place", zh: "五十二张全部到齐" } },
+    cfg: { ratio: 1, stuck: false, label: { en: "All 64 in place", zh: "六十四张全部到齐" } },
     build: function (S, tl, CFG, SEED) {
       var bar = S.slots.center(0.86, 0.12, { dy: -0.04 });
       var box = S.add(HW.rect(bar.w, bar.h, { seed: SEED, r: bar.h * 0.12 }), { x: bar.x, y: bar.y, seed: SEED });
@@ -1300,7 +1300,7 @@ window.CARDS = [
     name: "gear-mesh", family: "G metaphor",
     note: "migrated — turns once; sustained rotation is idle motion",
     line: "Two gears mesh; turning one turns the other",
-    cfg: { label: { en: "One token changes all 52 cards", zh: "改一处 token，五十二张卡跟着变" } },
+    cfg: { label: { en: "One token changes all 64 cards", zh: "改一处 token，六十四张卡跟着变" } },
     build: function (S, tl, CFG, SEED) {
       var field = S.slots.center(0.7, 0.36, { dy: -0.08 });
       var R1 = Math.min(field.w * 0.3, field.h * 0.46), R2 = R1 * 0.68;
@@ -1341,7 +1341,7 @@ window.CARDS = [
     name: "door-open-reveal", family: "G metaphor",
     note: "migrated — the closed door has to be seen first",
     line: "Doors part to reveal what is behind them",
-    cfg: { reveal: { en: "Fifty-two ways", zh: "五十二种画法" } },
+    cfg: { reveal: { en: "Sixty-four ways", zh: "六十四种画法" } },
     build: function (S, tl, CFG, SEED) {
       /* Width is capped at half the safe area on purpose: each leaf has to slide its own
          width sideways to clear the reveal, and only at <= 0.5 is there room for that
@@ -1555,7 +1555,7 @@ window.CARDS = [
     name: "sign-off", family: "I closing",
     note: "merges frame-corner-sign + stamp-seal-end — variant: border | stamp",
     line: "A drawn border with corner flourishes, or a stamp slamming beside the sign-off",
-    cfg: { variant: "border", sign: { en: "Handdrawn", zh: "手绘涂鸦" }, sub: { en: "52 scene cards", zh: "五十二张画面卡" } },
+    cfg: { variant: "border", sign: { en: "Handdrawn", zh: "手绘涂鸦" }, sub: { en: "64 scene cards", zh: "六十四张画面卡" } },
     build: function (S, tl, CFG, SEED) {
       var stamp = CFG.variant === "stamp";
       var textSlot = S.slots.center(0.7, 0.24, { dy: stamp ? -0.02 : 0 });

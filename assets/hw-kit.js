@@ -737,9 +737,17 @@
       "display:flex;align-items:center;justify-content:center;pointer-events:none";
     (S.layer || S.root).appendChild(host);
 
-    var FS = Math.round(S.short * opt(o, "size", 0.052));
-    var ink = opt(o, "ink", "var(--hw-ink,#141615)");
-    var accent = opt(o, "accent", "var(--hw-accent,#0f7173)");
+    /* 字号：竖屏 1080 短边 × 0.044 ≈ 48px。以前是 0.052（≈56px）—— 实测偏大，
+       两行中文几乎顶满整条带子，胶带被撑成一块板，抢主体。字幕是"跟读用的第二条
+       信息通道"，不是标题；它该让人扫一眼就回到画面上，所以要比主体明显小一档。
+       长句同样别靠调大字号救，靠 HW.wrapZh 断成两行短句。 */
+    var FS = Math.round(S.short * opt(o, "size", 0.044));
+    /* 颜色走本帧已装好的调色板（HW.stage 会把它内联到根上），var() 只作兜底。
+       写死 #141615 那版在"变量落空"的平台上会让字幕跟画风脱节：笔画是墨绿，
+       字幕是中性灰黑。 */
+    var pal = (S.palette || {});
+    var ink = opt(o, "ink", pal["--hw-ink"] || "var(--hw-ink,#003E1F)");
+    var accent = opt(o, "accent", pal["--hw-accent-ink"] || "var(--hw-accent-ink,#3C7A33)");
 
     lines.forEach(function (ln, i) {
       var card = document.createElement("div");
@@ -751,7 +759,8 @@
         "background:rgba(255,255,255,0.62);" +
         "-webkit-backdrop-filter:blur(14px) saturate(1.15);backdrop-filter:blur(14px) saturate(1.15);" +
         "box-shadow:0 1px 0 rgba(255,255,255,0.9) inset,0 0 0 1px rgba(20,22,21,0.07),0 10px 26px rgba(20,22,21,0.10);" +
-        "font-family:'Xiaolai','Excalifont',sans-serif;font-size:" + FS + "px;line-height:1.42;" +
+        "font-family:" + (pal["--hw-font-print"] || "'Xiaolai','Excalifont',sans-serif") +
+        ";font-size:" + FS + "px;line-height:1.42;" +
         "color:" + ink + ";text-align:center;white-space:pre-line;opacity:0";
       card.textContent = "";
 
@@ -968,26 +977,121 @@
     defaultFillStyle: "hachure",
   };
 
+  /* ══ 画风契约的 JS 真源 ═══════════════════════════════════════════════
+     以前这份配色只存在于每帧的 <style> 里（`#frame-root { --hw-ink: … }`），
+     kit 全靠 `stroke: var(--hw-ink)` 去读。**这是这条 skill 最贵的一个坑。**
+
+     出事的是"其他平台"：hyperframes 渲染时会把子合成的每一条 CSS 规则重写成
+       [data-composition-id="03-visualize"] <你写的选择器>
+     而根元素**自己**就是那个带 data-composition-id 的元素。于是
+       #root { --hw-ink: … }  →  [data-composition-id="…"] #root { … }
+     变成一条后代选择器，永远匹配不到根自己。整份调色板落空。
+
+     后果不是"颜色不对"，是**画面全灭**：rough.js 把颜色写成 SVG 呈现属性，
+     kit 改走 `style.stroke = "var(--hw-ink)"`，变量解析失败 → 描边为 none →
+     笔画一条都看不见，只剩 DOM 文字活着。三路探针实测：
+       手写 path + #c00        可见
+       手写 path + var(--hw-ink) 不可见
+       rough.js  + #c00        可见         ← rough.js 一直是好的
+       kitPaths=21, inkVar=""               ← 21 条 path 都在，只是没颜色
+     同一条也让 `font-family: var(--hw-font-print)` 落空，中文掉回系统宋体。
+
+     所以配色的真源搬到 JS：HW.stage 开场把这套值**内联写死在根元素上**。
+     内联样式不受任何选择器重写影响，在 hyperframes / Studio / iframe /
+     playground / 别人家的渲染器里一律成立。外部 CSS 仍然可以覆盖 —— 读得到就用
+     读到的，读不到才落这份默认。卡片照旧写 var(--hw-*)，一个字都不用改。 */
+  HW.PALETTE = {
+    "--hw-paper": "#FFFFFC",
+    "--hw-ink": "#003E1F",
+    "--hw-ink-soft": "rgba(0,62,31,.68)",
+    "--hw-accent": "#53A548",      /* 只做笔画：纸面上 2.75:1，过不了 3:1 的闸 */
+    "--hw-accent-ink": "#3C7A33",  /* 要绿色文字用这个：5.2:1 */
+    "--hw-font-print": '"Excalifont","Xiaolai",sans-serif',
+  };
+
+  /* 把调色板落到根上。已经被外部 CSS 定义过的值原样保留，只补没定义的。 */
+  HW.installPalette = function (root) {
+    if (!root || !root.style) return null;
+    var cs = window.getComputedStyle(root);
+    var out = {};
+    for (var k in HW.PALETTE) {
+      if (!Object.prototype.hasOwnProperty.call(HW.PALETTE, k)) continue;
+      var got = (cs.getPropertyValue(k) || "").trim();
+      var val = got || HW.PALETTE[k];
+      root.style.setProperty(k, val);
+      out[k] = val;
+    }
+    /* 字体同理。计算值里认不出本 skill 的两款字面就强制接管 —— 否则中文会静默
+       掉回系统衬线，而且这件事在缩略图上很容易被当成"就该长这样"放过去。 */
+    var ff = (cs.fontFamily || "");
+    if (!/Excalifont|Xiaolai/i.test(ff)) root.style.fontFamily = out["--hw-font-print"];
+    /* 根的盒子也别指望外部 CSS。少了 position:relative，所有 absolute 定位的
+       笔画层会跑去跟最近的定位祖先对齐，整帧偏移。 */
+    if (cs.position === "static") root.style.position = "relative";
+    return out;
+  };
+
   /* Frame-root resolver. The runtime strips the root div's id and replaces it with
      data-hf-authored-id="frame-root", so querySelector("#frame-root") always returns null and
      any gsap.set("#frame-root", ...) is a silent no-op. Always resolve through HW.el. */
-  HW.el = function (sel) {
+  /* 本帧的作用域。子合成被克隆进主合成后，**七个帧的 DOM 同时挂在一个 document 里**，
+     每个帧的根都叫 id="root"（脚手架就是这么教的，hyperframes 的 lint 也这么要求）。
+     于是 document.querySelector("#root") 对七个帧全部返回**第一个** ——
+     后面六帧的笔画一律画进第一帧的画布，全片叠成一坨，转场盖子从第 0 秒糊到最后。
+
+     这就是"其他平台跑不出流程图"里最狠的一半：单帧预览永远是对的（页面里只有一个
+     #root），一进主合成就全乱，而且不报任何错。
+
+     解法是**就近解析**：document.currentScript 在 inline script 执行期间指向那个
+     script 元素本身（跟函数定义在哪无关），从它往上找最近的 [data-composition-id]
+     就是本帧的容器，再在容器内部找根。拿不到 currentScript 才退回全局。 */
+  /* 按合成 id 取本帧的根。data-composition-id 按 hyperframes 的定义在整页唯一，
+     所以这是唯一可靠的定位方式 —— 见上面那段注释里 #root 撞车的账。
+     内联之后可能有两个元素带同一个 comp id：index.html 里的宿主 div（带
+     data-composition-src）和 <template> 里真正的根。要的是后者，也就是不带 src 的那个。 */
+  HW.byComp = function (compId) {
+    if (!compId) return null;
+    var all = [].slice.call(document.querySelectorAll('[data-composition-id="' + compId + '"]'));
+    if (!all.length) return null;
+    for (var i = all.length - 1; i >= 0; i--) {
+      if (!all[i].hasAttribute("data-composition-src")) return all[i];
+    }
+    return all[all.length - 1];
+  };
+
+  HW.el = function (sel, compId) {
     if (!sel) return null;
     if (sel.nodeType) return sel;
-    var el = document.querySelector(sel);
-    if (el) return el;
+    /* 给了合成 id 就走它，一步到位。 */
+    var byComp = HW.byComp(compId);
+    if (byComp) return byComp;
+
     var id = String(sel).replace(/^#/, "");
-    el = document.querySelector('[data-hf-authored-id="' + id + '"]');
-    if (el) return el;
-    if (document.currentScript && document.currentScript.parentElement) {
-      el = document.currentScript.parentElement.querySelector("[data-hf-inner-root]");
+    var all = [].slice.call(document.querySelectorAll(
+      '[id="' + id + '"],[data-hf-authored-id="' + id + '"]'));
+
+    /* 撞车必须炸，不许静默拿第一个 —— 静默正是"七帧叠成一坨"的成因，
+       而且它在单帧预览里永远看不出来（那时页面上确实只有一个 #root）。 */
+    if (all.length > 1) {
+      throw new Error(
+        'HW.stage: 根 "' + id + '" 在合成后的页面里出现了 ' + all.length + ' 次。\n' +
+        "  七个帧会全部画进第一个根，整片叠成一坨，而且不报错、单帧预览还是对的。\n" +
+        "  修：把本帧的合成 id 传给 stage —— HW.stage(\"#" + id + '", { w: …, h: …, id: "<data-composition-id>" })\n' +
+        "  （hyperframes 要求 id 在合成后的整页唯一；data-composition-id 天然满足。）");
     }
-    return el || null;
+    if (all[0]) return all[0];
+    if (document.currentScript && document.currentScript.parentElement) {
+      return document.currentScript.parentElement.querySelector("[data-hf-inner-root]");
+    }
+    return null;
   };
 
   HW.stage = function (rootSel, o) {
-    var root = HW.el(rootSel);
+    var root = HW.el(rootSel, opt(o, "id", null));
     if (!root) throw new Error("HW.stage: frame root not found: " + rootSel + " (the runtime strips ids — resolve with HW.el)");
+    /* 先装调色板，再建任何形状 —— 见 HW.PALETTE 上面那段。顺序不能反：
+       mkPath 建 path 的当下就要读到 var(--hw-ink)。 */
+    var PAL = HW.installPalette(root);
     var VW = opt(o, "w", 1920),
       VH = opt(o, "h", 1080);
     /* Every layout number in this stage derives from these. Nothing downstream may hardcode a
@@ -1190,6 +1294,7 @@
       root: root,
       svg: svg,
       layer: layer,
+      palette: PAL,      // 本帧最终生效的配色（已内联到根上，见 HW.PALETTE）
       /* Canvas facts a card is allowed to read. */
       W: VW, H: VH, short: SHORT, portrait: PORTRAIT,
       safe: SAFE,
@@ -1201,8 +1306,22 @@
       type: function (role, mul) {
         return Math.round(SHORT * (TYPE[role] !== undefined ? TYPE[role] : TYPE.body) * (mul || 1));
       },
-      /* Bounds of a text element, an SVG element, or an array of either (unioned). */
+      /* Bounds of a text element, an SVG element, a slot rect, or an array of any of them
+         (unioned).
+
+         **矩形这一路是补上去的。** 槽位（S.slots.* / S.below 的返回值）本身就是
+         {x,y,w,h,cx,cy,x2,y2}，卡片顺手把一个槽位传给 S.below 是最自然的写法：
+             S.below(chain.slots[chain.slots.length - 1], { gap: 0.06 })
+         以前这会掉进 rectOf 的 DOM 分支，`el.getBoundingClientRect is not a function`
+         直接抛出来 —— 而这个异常发生在建帧 IIFE 里，**整帧就此中断**：那一格在成片里
+         是一整段纯白，前面已经建好的形状也一个都不会动。实测两帧就这么空着，
+         四道闸没有一道看得见（它们都不读运行时）。所以这里认矩形，
+         并且 hyperframes check 的 Runtime 段要纳入验收（见 SKILL.md 渲染前的闸）。 */
       boundsOf: function (target) {
+        if (target && target.nodeType === undefined &&
+            typeof target.x === "number" && typeof target.w === "number") {
+          return mkRect(target.x, target.y, target.w, target.h);
+        }
         var els = Object.prototype.toString.call(target) === "[object Array]" ? target : [target];
         var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
         for (var i = 0; i < els.length; i++) {
@@ -1855,13 +1974,28 @@
          otherwise the shape simply never appears. */
       HW.claim(els[i]);
       if (els[i].getAttribute && els[i].getAttribute("data-hw-fill") !== null && els[i].style.stroke === "none") {
-        gsap.set(els[i], { opacity: 0 });
-        tl.to(els[i], { opacity: 1, duration: dur, ease: EASE_IN }, at + i * stag);
+        tl.fromTo(els[i], { opacity: 0 },
+          { opacity: 1, duration: dur, ease: EASE_IN }, at + i * stag);
         continue;
       }
       var len = els[i].getTotalLength ? els[i].getTotalLength() : 0;
       if (!len) continue;
-      gsap.set(els[i], { strokeDasharray: len, strokeDashoffset: len, opacity: 1 });
+      gsap.set(els[i], { strokeDasharray: len, strokeDashoffset: len });
+      /* opacity 闸，**做进引擎而不是留给调用方**。
+         以前这里写的是 `gsap.set(…, opacity: 1)` —— 建帧当下就点亮，全靠
+         strokeDashoffset = len 把形状藏住。但粗圆头笔触在虚线相位上会漏成一串圆点，
+         整块转场涂抹于是从第 0 秒就糊在画面上。以前这条 bug 一直没人看见，因为
+         var(--hw-ink) 解析失败让所有笔画本来就是透明的（见 HW.PALETTE）——
+         把颜色修好的第一秒，它就全冒出来了。
+
+         补救办法本来写在 hw-trans 的 X.D 里，SKILL.md 还专门叮嘱"别直接用 HW.draw"。
+         但**靠人记得绕开默认路径的规矩，迟早会被忘掉**（这支片七帧就忘了）。
+         所以闸挪进 HW.draw 本身：默认就是安全的，X.D 保留只为兼容。
+
+         用 fromTo + immediateRender，不用 tl.set：raw set 只在建帧那一刻跑一次，
+         时间轴被直接 seek 到某个时刻时不会回滚，抓帧和 Studio 拖动都会看到未来的画面。 */
+      tl.fromTo(els[i], { opacity: 0 },
+        { opacity: 1, duration: 0.001, ease: "none", immediateRender: true }, at + i * stag);
       tl.to(els[i], { strokeDashoffset: 0, duration: dur, ease: opt(o, "ease", EASE_MOVE) }, at + i * stag);
     }
     return at + dur + Math.max(0, els.length - 1) * stag;
@@ -2029,8 +2163,11 @@
   };
 
   /* Frame shell: entrance, exit, and end-of-shot hide. Call this last in every frame. */
+  /* 第二个参数收 stage（推荐，`HW.frame(tl, S, DUR)`）或选择器（旧写法）。
+     收 stage 时直接复用 stage 已经解析对的那个根 —— 选择器那条路会再查一次全局，
+     多帧同名时会炸在这儿，而这时候明明已经有正确答案在手上了。 */
   HW.frame = function (tl, rootSel, DUR, o) {
-    var root = HW.el(rootSel);
+    var root = (rootSel && rootSel.root) ? rootSel.root : HW.el(rootSel, (o && o.id) || null);
     if (!root) throw new Error("HW.frame: frame root not found: " + rootSel);
     if (opt(o, "fadeIn", true)) {
       gsap.set(root, { opacity: 0 });

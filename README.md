@@ -46,7 +46,7 @@ Excalidraw 自己那套手绘渲染引擎，字体也沿用 Excalidraw 的官方
 （Excalifont + 小赖字体）。同一句话每次渲染抖在同一个地方，因为随机数带种子。
 
 ```
-一段文字  →  逐句选卡（64 张可选）  →  笔画原语建帧  →  四道闸  →  MP4
+一段文字  →  逐句选卡（64 张可选）  →  笔画原语建帧  →  五道闸  →  MP4
 ```
 
 画面不是手写三百行代码画出来的，是 65 个**确定性笔画原语**（抖动方框、弧线箭头、
@@ -55,7 +55,7 @@ Excalidraw 自己那套手绘渲染引擎，字体也沿用 Excalidraw 的官方
 
 ## 它替你盯着的那些事
 
-这类片子翻车从来不翻在创意上，翻在细节上。所以有四道闸拦着，每一条都是真出过一次
+这类片子翻车从来不翻在创意上，翻在细节上。所以有五道闸拦着，每一条都是真出过一次
 才写进去的：
 
 - **中文断行不许出孤字。** 浏览器不知道「正反馈」是一个词，会把标题断成「x 上的正反 / 馈」。
@@ -70,40 +70,59 @@ Excalidraw 自己那套手绘渲染引擎，字体也沿用 Excalidraw 的官方
 
 ## 装
 
-需要 Node、ffmpeg，以及 [HyperFrames](https://hyperframes.heygen.com/)（`npx` 直接调，不用预装）。
-
-整个目录就是 skill 本身，**不绑定任何一家模型**。直接 clone 进 agent 的 skill 目录：
+一条命令：
 
 ```bash
-git clone <this-repo> ~/.claude/skills/handdrawn
+curl -fsSL https://raw.githubusercontent.com/derek-zhuolin/VideoHand/main/tools/install.sh | bash
 ```
 
-**仓库本体就放在 skill 目录里，不要软链、也不要复制。** 这样"唯一实体"和"agent 读到的
-那份"是同一个东西，改完 commit 就生效，不存在同步这一步。
+它会**探测你本机装了哪些 agent**（Claude Code / agents / Codex / Cursor / Crush /
+Gemini），往每个已经存在的 skill 目录里 clone 一份，生成 64 张卡的动图墙，
+最后跑一遍自检把结果打给你看。已经存在的目录不覆盖 —— 那里面可能有你没提交的改动，
+遇到就停下来报告，让你自己决定。
 
-要装到别的 harness（agents / WorkBuddy / Codex / Hermes / Crush / Devin / Gemini /
-Cursor），各自再 clone 一份，靠 `git pull` 拉齐：
+不想执行来路不明的脚本（合理），就手动：
 
 ```bash
-git -C ~/.agents/skills/handdrawn pull
+git clone https://github.com/derek-zhuolin/VideoHand.git ~/.claude/skills/handdrawn
+node ~/.claude/skills/handdrawn/tools/doctor.mjs        # 自检
+node ~/.claude/skills/handdrawn/scripts/build-gallery.mjs && \
+  open ~/.claude/skills/handdrawn/playground/index.html  # 看看能画什么
 ```
 
-> **别用复制，也别用软链。** 复制会得到 N 份各自漂移的副本——改了一份，其余 N-1 份
-> 还是老的，而你不知道哪个 agent 在用哪份。软链看似解决了漂移，但它把"指向哪里"变成
-> 一个看不见的状态：这个坑踩过，`~/.claude/skills/handdrawn` 曾经指向工作台里的一份
-> 旧拷贝，于是「仓库修好了、成片还是老问题」，排查了很久才发现根本不在同一份代码上。
-> git clone 的好处是每一份都能 `git log` 自证版本，问题一眼可见。
+### 装不上的时候
 
-> 实测：同一份 `SKILL.md` 用 `deepseek-v4-flash` 跑，四道闸和字幕契约都能准确复述。
+先跑自检，它会把"跑不起来"拆成几种不同的原因，每条都带一句能直接粘贴的命令：
+
+```bash
+node tools/doctor.mjs
+```
+
+查这六件事：Node 版本、ffmpeg、skill 的件是否齐、**中文字体是不是被换成了 LFS 指针**
+（1.4 MB 的字体常在 clone 时变成几十字节，现象是中文全部掉回系统宋体）、
+npx 拉不拉得到 hyperframes（多半是 registry 不通，它会给你镜像命令）、
+以及**你装的位置 agent 认不认**。
+
+需要的东西只有：Node ≥ 20、ffmpeg、以及
+[HyperFrames](https://hyperframes.heygen.com/)（`npx` 直接调，不用预装）。
+**不绑定任何一家模型** —— 整个目录就是 skill 本身。
+
+### 为什么是 clone，不是复制、也不是软链
+
+复制会得到 N 份各自漂移的副本 —— 改了一份，其余 N-1 份还是老的，而你不知道哪个
+agent 在用哪份。这个坑踩过不止一次：某个 skill 目录里躺着一份旧拷贝，于是
+「仓库修好了、成片还是老问题」，排查很久才发现根本不在同一份代码上。
+
+软链看似解决了漂移，但它把"指向哪里"变成一个看不见的状态，出问题时更难查。
+clone 的好处是**每一份都能 `git log` 自证版本**，一眼就知道谁老了。要拉齐：
+
+```bash
+git -C ~/.claude/skills/handdrawn pull
+```
+
+> 实测：同一份 `SKILL.md` 用 `deepseek-v4-flash` 跑，闸和字幕契约都能准确复述。
 > 换模型不用改 skill。DeepSeek / GLM / Kimi 这类一般是把 harness 指到别的 API 端点，
 > skill 目录不变，装一次就够了。
-
-验证装好了：
-
-```bash
-node scripts/build-gallery.mjs   # 重建 playground/index.html
-open playground/index.html
-```
 
 ---
 
@@ -113,7 +132,7 @@ open playground/index.html
 
 > 把这段话做成手绘视频：<你的稿子>
 
-它会读 `SKILL.md`，逐句选卡，建帧，跑四道闸，然后渲染。你不用懂卡名，也不用写配置。
+它会读 `SKILL.md`，逐句选卡，建帧，跑五道闸，然后渲染。你不用懂卡名，也不用写配置。
 
 想让它照你的意思走，就在稿子后面加一句大白话——这些都是它听得懂的：
 
@@ -195,18 +214,28 @@ open playground/index.html
 
 ---
 
-## 四道闸
+## 五道闸
 
 ```bash
-npm run check                            # HyperFrames：渲染错误 + 对比度
+node scripts/portability-lint.mjs <片目录>  # 跨平台：合成之后才发作的那一类
+npm run check                            # HyperFrames：渲染错误 + 对比度 + Runtime
 node scripts/scene-lint.mjs  <片目录>     # 选卡纪律：相邻不重、能量配比、转场种类
 node scripts/motion-lint.mjs <片目录>     # 动效尺度：时长、错峰、缓动词表
 node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面审计（gate + frame-audit 随包在 tools/）
 ```
 
-四个都得退出 0 才能渲。前三道只读代码和 STORYBOARD——**它们看不见画面**。
-第四道抓帧判像素，真正让人一眼说「这不对」的几件事只有它查得出来：
-坠底、缝里空帧、字幕带空着、留白断层。
+五个都得退出 0 才能渲。它们看的是**互不重叠的四个层**：
+
+- **portability-lint** 看合成之后的结构。这道闸是一次真实事故换来的：
+  单帧预览全对、playground 全对、其余四道闸全绿，渲出来的片子**一条手绘笔画都没有**。
+  原因是帧里的 CSS 选择器跟根的真实 id 对不上，`--hw-ink` 落空，
+  于是 `stroke: var(--hw-ink)` 解析失败、描边变成 `none` ——
+  形状一直好好地在 DOM 里，只是全透明。它还查根 id 撞车、CDN 外链、`../` 路径。
+- **check 的 Runtime 段**看浏览器真的报没报错。建帧脚本抛一个异常，
+  那一格在成片里就是一整段纯白，而只读源码的闸一个都看不见。**别只看总退出码。**
+- **scene-lint / motion-lint** 只读代码和 STORYBOARD——它们看不见画面。
+- **gate** 抓帧判像素，真正让人一眼说「这不对」的几件事只有它查得出来：
+  坠底、缝里空帧、字幕带空着、留白断层。
 
 > 判闸一律看退出码，**不许 `命令 | tail -N`**——那拿到的是 tail 的 0，永远是「过」。
 
@@ -232,9 +261,10 @@ handdrawn/
 │   ├── layout.md               # 安全区 / 画幅自适应 / 槽位 / 入框契约
 │   ├── palette.md              # 配色与对比度算账、字体子集化
 │   ├── transitions.md          # 8 种手绘转场
-│   ├── pitfalls.md             # 坑位全录（33 条实测）
+│   ├── pitfalls.md             # 坑位全录（39 条实测，第七节＝合成之后才发作的）
 │   └── voice-pipeline.md       # 配音契约（不绑定任何 TTS 厂商）
-├── scripts/                    # scene-lint / motion-lint / build-gallery
+├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
+├── tools/                      # install.sh / doctor.mjs / gate.mjs / frame-audit.py
 ├── templates/                  # 帧脚手架 + 字幕皮肤
 ├── playground/index.html       # 64 格动图墙，双击就能看
 └── evals/                      # 3 个评估场景，改 skill 之后跑它

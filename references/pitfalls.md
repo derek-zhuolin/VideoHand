@@ -274,3 +274,99 @@ handdrawn 的帧是 `compositions/frames/*.html` —— 它一条都读不到，
 → 连带的第二个盲点：handdrawn 的 motion-lint 用正则 `(?:stagger|step):\s*([\d.]+)`
    抓错峰值，**只认字面量**。写成 `step: L.cmd ? 0.030 : 0.012` 它看不见。
    算出来的值不等于查过了 —— 该写注释说清楚为什么这个值是对的。
+
+---
+
+## 第七节 · 合成之后才发作的坑
+
+下面五条是同一次事故拆出来的。共同点：**它们全都只在"子合成被合进主合成之后"才发作**，
+而当时四道闸都在合成之前看，playground 和单帧预览也都只有一个帧在场 ——
+于是一支画面全灭的片子拿着五个绿勾渲了出来。
+
+现在由 `scripts/portability-lint.mjs` 专门查这一类（第五道闸）。
+
+### 35. CSS 变量落空 → **所有手绘笔画变透明**
+
+帧里写的是 `#frame-root { --hw-ink: … }`，可根元素其实叫 `id="root"`。
+选择器一条都不命中，浏览器不报错，整段样式静默作废。
+
+后果不是"颜色不对"，是画面全灭：rough.js 把颜色写成 SVG 呈现属性（不解析 `var()`），
+kit 因此改走 `style.stroke = "var(--hw-ink)"`；变量没定义 → 解析失败 → 描边为 `none`。
+**笔画一条都看不见，只剩 DOM 文字活着**，看起来像"这一版就是极简风"。
+同一条也让 `font-family: var(--hw-font-print)` 落空，中文掉回系统宋体。
+
+三路探针（把三种画法并排画进同一帧）一次定位：
+
+| 画法 | 结果 |
+|---|---|
+| 手写 path + 硬编码 `#c00` | 可见 |
+| 手写 path + `style.stroke = "var(--hw-ink)"` | **不可见** |
+| rough.js 画的线 + 硬编码 hex | 可见 |
+| 运行时探测 | `rough=object`、`kitPaths=21`、`inkVar=""` |
+
+21 条 path 一直好好地在 DOM 里，只是没有颜色。**"什么都没画出来"和"画了但看不见"
+是两件完全不同的事**，先分清再修，否则会去查 rough.js 有没有加载（它一直是好的）。
+
+→ 配色的真源搬进 JS（`HW.PALETTE`），`HW.stage` 开场把它**内联写到根元素上**。
+   内联样式不受任何选择器重写影响，在 hyperframes / Studio / iframe / playground /
+   别人家的渲染器里一律成立。外部 CSS 仍可覆盖：读得到就用读到的。
+
+→ 帧里的选择器仍然只能是 `#root`。挂 class 也不行 —— 渲染时每条规则被 scope 成
+   `[data-composition-id="…"] <选择器>`，以根自己的 class 起头会变成一条匹配不到根的
+   后代选择器。`#root` 被 scoper 特判，是唯一安全的写法。
+
+### 36. 七个帧抢同一个 `#root` → 全片叠成一坨
+
+脚手架教的是根用 `id="root"`。合成之后七个子合成的 DOM 同时挂在一个 document 里，
+于是页面上有七个 `#root`，`document.querySelector("#root")` 永远返回**第一个**。
+后面六帧的笔画全画进第一帧的画布：转场盖子从第 0 秒糊到最后，主体互相压。
+
+**单帧预览永远看不出来** —— 那时页面上确实只有一个 `#root`。
+hyperframes 自己的规矩写在 SKILL 里：*每个 id 必须在合成后的整页里唯一*。
+
+→ `HW.stage` 要收本帧的合成 id：
+
+```js
+var S = HW.stage("#root", { w: 1080, h: 1920, id: "03-visualize" });
+HW.frame(tl, S, DUR);        // 收 stage，不收选择器
+```
+
+`data-composition-id` 按定义整页唯一，是唯一可靠的身份。漏传且页面上有重名时
+`HW.stage` 直接抛错 —— **静默拿第一个才是灾难**，报错只是麻烦。
+
+### 37. 揭示门用 raw `gsap.set` → 抓帧和拖动都会看到未来
+
+`HW.draw` 以前在建帧当下就 `gsap.set(el, { opacity: 1 })`，全靠
+`strokeDashoffset = len` 把形状藏住。可粗圆头笔触在虚线相位上会漏成一串圆点，
+整块转场涂抹于是提前显形。
+
+补救办法本来写在 `hw-trans.js` 的 `X.D` 里，SKILL.md 还专门叮嘱"别直接用 HW.draw"。
+**但靠人记得绕开默认路径的规矩，迟早会被忘掉** —— 一支片七帧全忘了。
+
+→ 闸挪进 `HW.draw` 本身，默认就是安全的；`X.D` 保留只为兼容。
+→ 用 `tl.fromTo(..., { immediateRender: true })`，不要 `tl.set()`。
+  raw set 只在建帧那一刻跑一次、**不可回滚**：时间轴被直接 seek 到某个时刻
+  （抓帧、快照、Studio 拖动）时不会退回去，于是看到本该在未来才出现的画面。
+
+### 38. 建帧里抛一个异常 = 那一格在成片里是一整段纯白
+
+`S.below(chain.slots[last], …)` 传的是槽位矩形而不是元素，`rectOf` 掉进 DOM 分支，
+`el.getBoundingClientRect is not a function`。异常发生在建帧 IIFE 里，
+**整帧就此中断**：那一格什么都没有，前面已经建好的形状也一个都不会动。
+
+四道闸没有一道看得见 —— 它们都只读源码，不读运行时。
+`hyperframes check` 的 **Runtime** 段看得见，一句 `console_error` 指名道姓。
+
+→ `S.boundsOf` 现在认矩形（槽位本来就是矩形，卡片这么传天经地义）。
+→ **渲染前必须看 `check` 的 Runtime 段**，别只看总的退出码。
+
+### 39. gsap 引 CDN → 断网 / CI / 别人的机器上是白屏
+
+帧里写 `<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/…">`。
+本机联网时一切正常，所以能一路过闸；换台机器、进 CI、或者网络到不了 jsdelivr，
+就是白屏，而且版本会在你不知道的时候变，确定性渲染直接失效。
+
+同一族的还有资产路径带 `../`：渲染会按子合成源文件路径重写所以跑得动，
+**Studio 预览和别的消费方按项目根解析 → 404**。"在我这儿好好的"就是这么来的。
+
+→ 一律 `assets/vendor/` 本地副本 + 根相对路径。第五道闸查这两条。

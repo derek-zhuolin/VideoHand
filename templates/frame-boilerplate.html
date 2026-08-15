@@ -1,25 +1,34 @@
 <!doctype html>
-<html lang="zh">
+<html lang="zh" translate="no" class="notranslate">
   <head>
     <meta charset="UTF-8" />
-    <!-- head 只给源文件当元数据；运行时克隆 <template> -->
+    <!-- head 只给源文件当元数据；运行时克隆的是 <template> 里的东西 -->
+    <meta name="google" content="notranslate" />
   </head>
   <body>
     <template>
-      <!-- ⚠️ kit 必须引在 <template> 内。引在 template 外不生效（实测：探针拿不到）。 -->
-      <script src="assets/vendor/hw-kit.js"></script>
+      <!-- ⚠️ 四条引用红线，每一条都对应一次真实翻车：
+           ① 必须引在 <template> 内 —— 引在外面永远不执行，而且不报错
+           ② 路径必须是根相对（assets/…），不许 ../ —— 子合成以项目根为 base URL，
+              渲染会按源文件路径重写所以"在我这儿能跑"，Studio 预览和别的消费方 404
+           ③ 不许引 CDN —— 断网 / CI / 别人的机器上就是白屏，版本还会自己变
+           ④ 顺序：rough → gsap → kit → trans -->
+      <script src="assets/vendor/rough.js"></script>
+      <script src="assets/vendor/gsap.min.js"></script>
+      <script src="assets/hw-kit.js"></script>
+      <script src="assets/hw-trans.js"></script>
 
       <style>
-        /* ── 字体：全片一份放 assets/fonts/，每帧各自声明（lint 要求）── */
+        /* ── 字体：全片一份放 assets/fonts/，每帧各自声明 ── */
         @font-face {
-          font-family: "Caveat";
-          src: url("assets/fonts/Caveat-700-latin.woff2") format("woff2");
-          font-weight: 700;
+          font-family: "Excalifont";
+          src: url("assets/fonts/Excalifont-Regular.woff2") format("woff2");
+          font-weight: 400;
           font-display: block;
         }
         @font-face {
-          font-family: "Ma Shan Zheng";
-          src: url("assets/fonts/MaShanZheng-subset.woff2") format("woff2");
+          font-family: "Xiaolai";
+          src: url("assets/fonts/Xiaolai-subset.woff2") format("woff2");
           font-weight: 400;
           font-display: block;
         }
@@ -35,33 +44,65 @@
           overflow: hidden;
         }
 
-        /* ── 配色：单一来源，见 references/palette.md。卡里禁止出现 hex ── */
-        #frame-root {
+        /* ── 根的选择器只能是 `#root` ────────────────────────────────
+           不许改成别的 id，也不许挂 class 再从 class 起头写规则：
+
+           · 写成 `#frame-root` 这类跟真实 id 对不上的名字 —— 浏览器不报错，
+             整段静默作废。这一段里有 --hw-* 配色，落空的后果是
+             `stroke: var(--hw-ink)` 解析失败 → **所有手绘笔画变透明**，
+             中文掉回系统宋体。实测就是这么丢掉一整支片的画面的。
+
+           · 挂 class 也不行：渲染时每条规则被 scope 成
+             `[data-composition-id="…"] <选择器>`，以根自己的 class 起头会变成
+             一条匹配不到根的后代选择器。`#root` 被 scoper 特判，是唯一安全的写法。
+
+           配色现在在 hw-kit.js 的 HW.PALETTE 里也有一份，HW.stage 会把它内联到根上，
+           所以就算这一段整个失效，笔画也还在。这里保留是为了让配色可覆盖、可读。 */
+        #root {
           --hw-paper: #fffffc;
           --hw-ink: #003e1f;
           --hw-ink-soft: rgba(0, 62, 31, 0.68);
           --hw-accent: #53a548; /* 只做笔画，不做文字（2.75:1 过不了 check） */
           --hw-accent-ink: #3c7a33; /* 要绿色文字用这个（5.2:1） */
-          --hw-font-print: "Caveat", "Ma Shan Zheng", cursive;
+          --hw-font-print: "Excalifont", "Xiaolai", sans-serif;
 
           position: relative;
-          width: 1920px;
-          height: 1080px;
+          width: 1080px;
+          height: 1920px;
           overflow: hidden;
-          background: transparent; /* 纸面由主合成的 #paper clip 常驻 */
+          background: transparent; /* 纸面由主合成的 #paper 常驻 */
           font-family: var(--hw-font-print);
+        }
+        #root .hw-layer {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        #root svg.hw-svg {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+          pointer-events: none;
+        }
+        #root .hw-captions {
+          position: absolute;
+          pointer-events: none;
         }
       </style>
 
       <!-- 帧根：空的。所有笔画由 HW.stage 建，卡片只写配置。
-           注意：运行时会剥掉这个 id，换成 data-hf-authored-id —— 所以选根一律走 HW.el()。 -->
-      <div id="frame-root" data-composition-id="sN" data-width="1920" data-height="1080"></div>
+           id 一律 root（脚手架惯例，CSS scoper 对它有特判）；
+           **本帧的身份靠 data-composition-id**，下面 HW.stage 要把它传进去。 -->
+      <div id="root" data-composition-id="sN" data-width="1080" data-height="1920"></div>
 
       <script>
         (function () {
           window.__timelines = window.__timelines || {};
 
           /* ═══════════ 改这里：本帧内容 ═══════════ */
+          var COMP = "sN";  /* ← 必须 = 上面 data-composition-id = __timelines 的键 */
           var CFG = {
             title: "一句话标题",
             note: "一句注释",
@@ -70,33 +111,61 @@
           var DUR = 6.0; /* ← 必须 = 主合成里该帧的 data-duration */
           /* ═══════════════════════════════════════ */
 
-          var S = HW.stage("#frame-root");
+          /* id 必须传。合成之后七个帧的根都叫 #root，同一个 document 里有七个，
+             靠 id 选择器只会拿到**第一个** —— 后面每一帧的笔画都画进第一帧的画布，
+             整片叠成一坨，而且不报错、单帧预览还是对的。
+             data-composition-id 按 hyperframes 的定义在整页唯一，是唯一可靠的身份。
+             漏传时 HW.stage 会直接抛错，不会静默画错地方。 */
+          var S = HW.stage("#root", { w: 1080, h: 1920, id: COMP });
           var tl = gsap.timeline({ paused: true });
+          var X = HWT(S, tl);
 
-          /* ── 布局：从 HW.slots 取槽位，别手写坐标 ── */
-          var slot = HW.slots.center(1180, 300, { dy: -40 })[0];
+          /* ── 布局：从 S.slots 取槽位，别手写坐标 ── */
+          var slot = S.slots.center(0.9, 0.26, { dy: -0.08 });
 
-          /* ── 笔画：HW.* 出 d，S.add 落到 svg（定位走外层 g，boil 不会冲掉）── */
-          var box = S.add(HW.rect(slot.w, slot.h, { seed: CFG.seed }), { x: slot.x, y: slot.y });
-          var title = S.words(CFG.title, { cx: 960, y: slot.y + 82, size: 96, w: 1400 });
-          var under = S.add(HW.wave(760, { seed: CFG.seed + 3 }), { x: 580, y: slot.y + slot.h + 46, ink: "accent" });
-          var note = S.words(CFG.note, { cx: 960, y: slot.y + slot.h + 92, size: 52, w: 1200, color: "var(--hw-ink-soft)" });
+          /* ── 笔画：HW.* 出形状，S.add 落到 svg（定位走外层 g，boil 不会冲掉）── */
+          var box = S.add(HW.rect(slot.w, slot.h, { seed: CFG.seed }), {
+            x: slot.x, y: slot.y, seed: CFG.seed,
+          });
+          var title = S.boxText(slot, CFG.title, { role: "title", maxLines: 2 });
+          var under = S.below(box, { gap: 0.022, w: 0.6, h: 0.05 });
+          var wave = S.add(HW.wave(under.w, { seed: CFG.seed + 3 }), {
+            x: under.x, y: under.cy, ink: "accent", seed: CFG.seed + 3,
+          });
 
-          /* ── 编排：定律① 描线 → 定律③ 逐词 → 收尾 ── */
+          /* ── 支撑层：别让 58%–75% 系统性地空着（见 SKILL.md 版面三层）── */
+          var noteSlot = S.below(wave, { gap: 0.03, w: 0.72, h: 0.09 });
+          var note = S.boxText(noteSlot, CFG.note, {
+            role: "label", color: "var(--hw-ink-soft)", maxLines: 1,
+          });
+
+          /* ── 编排：描线 → 逐词 → 收尾。
+                 HW.draw 自带 opacity 闸，直接用就行（以前要绕道 X.D，现在不用了）── */
           HW.draw(tl, box, { at: 0.32 });
           HW.wordsIn(tl, title, { at: 0.78 });
-          HW.draw(tl, under, { at: 1.72 });
+          HW.draw(tl, wave, { at: 1.72 });
           HW.wordsIn(tl, note, { at: 2.0, step: 0.05 });
 
-          /* ── 定律② 沸腾呼吸（甜区默认值，别传大 amp）── */
-          HW.boil(tl, [box, under], { seed: CFG.seed });
+          /* ── 沸腾呼吸（甜区默认值，别传大 amp）── */
+          HW.boil(tl, [].concat(box, wave), { seed: CFG.seed });
 
           /* ── 有进必有出 ── */
           HW.wordsOut(tl, title, { at: DUR - 0.72 });
           HW.fadeOut(tl, [note.el], { at: DUR - 0.6 });
 
-          HW.frame(tl, "#frame-root", DUR);
-          window.__timelines["sN"] = tl; /* ← id 与 data-composition-id 一致 */
+          /* ── 字幕：一条 = 一个口播短句，≤14 字，一条只高亮一个词 ── */
+          HW.captions(tl, S, [
+            { t: 0.2, d: DUR - 0.5, text: "这一句的口播文案", key: "口播" },
+          ]);
+
+          /* ── 转场：只在有缝的那一侧写，硬切两侧都不写。
+                 两半必须同一个 SEED，账记在 STORYBOARD 里 ── */
+          // X.TI["paper-slide"](101);            // 开头：把上一格的盖子揭开
+          // X.T ["ink-blot"](DUR - 0.40, 102);   // 结尾：给下一格盖上
+
+          /* HW.frame 收 stage，不收选择器 —— 复用 stage 已经解析对的那个根。 */
+          HW.frame(tl, S, DUR);
+          window.__timelines[COMP] = tl;
         })();
       </script>
     </template>
