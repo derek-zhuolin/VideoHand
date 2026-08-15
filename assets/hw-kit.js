@@ -798,6 +798,98 @@
     return (s.slice(0, best) + "\n" + s.slice(best)).replace(/\n[，,。.、；;：:？?！!]/, function (m) { return m[1] + "\n"; }).trim();
   };
 
+  /* 断行的通用词法。CJK 逐字、拉丁按词、空白单独成 token，末尾 |[^\s] 兜底分支不能删 ——
+     没有它 String.match 会静默丢字（实测 `node scripts/x.mjs` 渲染成 `node scriptsx.mjs`）。 */
+  HW.tokenize = function (s) {
+    return (
+      String(s).match(
+        /[一-鿿㐀-䶿　-〿＀-￯]|[A-Za-z0-9._\-\/:$%#@+=~&?!,;'"()[\]{}<>*^|\\]+|\s+|[^\s]/g
+      ) || []
+    );
+  };
+
+  var BREAK_CLOSER = /^[。，、；：！？…—·”’）』」】》!?,.;:%]/;   /* 不能起行 */
+  var BREAK_OPENER = /[“‘（『「【《]$/;                          /* 不能收行 */
+  var BREAK_CONJ = ["但是", "所以", "因为", "而且", "然后", "其实", "就是", "只要", "如果", "不是", "而是", "并且", "于是"];
+
+  /* 把 token 序列切成若干行，返回每行的 token 下标数组。
+     这是 wrapZh 的通用化版本：wrapZh 只切两行且按字数估宽，这里按**实测宽度**切任意行数。
+
+     浏览器对中文的换行规则是「任意两字之间都能断」—— 它不知道「正反馈」是一个词，
+     于是「x 上的正反馈」会断成「x 上的正反 / 馈」。所以断点必须由这里决定，
+     容器则设 white-space:pre 让浏览器彻底没有发言权。
+
+     优先级：标点后 > 连词前 > 接近等宽。再加三条硬约束：
+       行首不给闭合标点、行尾不留开放标点、末行至少两个 token（孤字禁令）。 */
+  HW.planLines = function (toks, ws, boxW, o) {
+    var total = 0, i;
+    for (i = 0; i < ws.length; i++) total += ws[i];
+    var k = Math.max(1, Math.ceil(total / Math.max(1, boxW)));
+    if (k < 2) return [toks.map(function (_, ix) { return ix; })];
+    var target = total / k;
+    var maxLines = opt(o, "maxLines", 0);
+    if (maxLines && k > maxLines) k = maxLines;
+
+    /* 语义分：断在标点后最好，断在连词前次之。 */
+    function semantic(at) {
+      if (at <= 0 || at >= toks.length) return -1;
+      var prev = toks[at - 1];
+      if (BREAK_CLOSER.test(prev)) return 3;              /* 标点归上一行，断在它后面 */
+      var rest = toks.slice(at, at + 2).join("");
+      for (var c = 0; c < BREAK_CONJ.length; c++) {
+        if (rest.indexOf(BREAK_CONJ[c]) === 0) return 2;  /* 连词起新行 */
+      }
+      if (/^\s+$/.test(prev)) return 1;                   /* 拉丁词间空格 */
+      return 0;
+    }
+    function legal(at) {
+      if (at <= 0 || at >= toks.length) return false;
+      if (BREAK_CLOSER.test(toks[at])) return false;      /* 闭合标点不能起行 */
+      if (BREAK_OPENER.test(toks[at - 1])) return false;  /* 开放标点不能收行 */
+      return true;
+    }
+
+    var lines = [];
+    var start = 0;
+    for (var line = 0; line < k - 1 && start < toks.length; line++) {
+      var acc = 0, at = start;
+      while (at < toks.length && acc + ws[at] / 2 < target) { acc += ws[at]; at++; }
+      if (at <= start) at = start + 1;
+      /* 在候选点附近开个窗口找语义更好的断点，窗口宽度随行长走。 */
+      var span = Math.max(2, Math.round((at - start) * 0.34));
+      var best = -1, bestScore = -1e9;
+      for (var cand = Math.max(start + 1, at - span); cand <= Math.min(toks.length - 1, at + span); cand++) {
+        if (!legal(cand)) continue;
+        var w = 0;
+        for (i = start; i < cand; i++) w += ws[i];
+        var score = semantic(cand) * 1.0 - Math.abs(w - target) / Math.max(1, target) * 1.6;
+        if (score > bestScore) { bestScore = score; best = cand; }
+      }
+      if (best < 0) best = Math.min(toks.length - 1, Math.max(start + 1, at));
+      var idx = [];
+      for (i = start; i < best; i++) idx.push(i);
+      lines.push(idx);
+      start = best;
+    }
+    var tail = [];
+    for (i = start; i < toks.length; i++) tail.push(i);
+    lines.push(tail);
+
+    /* 孤字禁令：末行只剩一个实体 token 时，从上一行借一个回来。 */
+    function solid(idx) {
+      var n = 0;
+      for (var j = 0; j < idx.length; j++) if (!/^\s+$/.test(toks[idx[j]])) n++;
+      return n;
+    }
+    var guard = 0;
+    while (lines.length > 1 && solid(lines[lines.length - 1]) < 2 && guard++ < 8) {
+      var prevLine = lines[lines.length - 2];
+      if (solid(prevLine) <= 2) break;
+      lines[lines.length - 1].unshift(prevLine.pop());
+    }
+    return lines.filter(function (l) { return l.length; });
+  };
+
   HW.scribbleFill = function (w, h, o) {
     var seed = opt(o, "seed", 1);
     var gap = opt(o, "gap", 16);
@@ -1425,13 +1517,21 @@
         var size = opt(opts, "size", 64);
         var color = opt(opts, "color", "var(--hw-ink)");
         var align = opt(opts, "align", "center");
+        /* An ARRAY is the author's own semantic line split — one meaning unit per line, kept
+           verbatim. That is the preferred form for a CJK title, because no measurement-driven
+           breaker beats a human who knows where the phrase joints are. */
+        if (Object.prototype.toString.call(str) === "[object Array]") str = str.join("\n");
         el.textContent = str;
         /* A card that wants a different face (a terminal's monospace, say) must declare it HERE,
            before the fit runs. Overriding font-family after the fact re-measures nothing, so the
            text keeps a size that only fitted the old metrics and spills out of its box. */
         var face = opt(opts, "font", "var(--hw-font-print)");
+        /* white-space:pre, not pre-wrap. pre-wrap lets the BROWSER pick CJK breaks, and it will
+           break between any two characters — it has no idea 正反馈 is one word, which is how a
+           title renders as "x 上的正反 / 馈". Under pre, a break exists only where this kit put
+           one: either the author's \n, or a measured break from HW.planLines below. */
         el.style.cssText =
-          "position:absolute;font-family:" + face + ";font-weight:700;line-height:1.28;white-space:pre-wrap;" +
+          "position:absolute;font-family:" + face + ";font-weight:700;line-height:1.28;white-space:pre;" +
           "font-size:" + size + "px;color:" + color + ";text-align:" + align + ";opacity:0;";
         if (opts && opts.cx !== undefined) {
           var wd = opt(opts, "w", VW);
@@ -1449,8 +1549,100 @@
         el.setAttribute("translate", "no");
         el.classList.add("notranslate");
         layer.appendChild(el);
+        /* Now that pre suppresses browser wrapping, a long line would run off the side instead
+           of wrapping. So re-create wrapping here, semantically: measure, plan breaks, insert
+           them. Only for a plain single-line string — an author's \n or array is never redone. */
+        if (String(str).indexOf("\n") < 0) api.relineate(el, opts);
         if (opts && opts.fit) api.fit(el, opts);
         return el;
+      },
+      /* Insert <br> between the spans of a words() element, at measured semantic break points.
+         hardBreak marks token indices the author already forced onto a new line. */
+      breakSpans: function (el, toks, hardBreak, opts) {
+        var boxW = opt(opts, "w", el.offsetWidth || 0);
+        var kids = Array.prototype.slice.call(el.childNodes);
+        /* Map token index -> the node that carries it, so a plan in token space can be
+           applied in DOM space. Whitespace tokens are text nodes, not spans. */
+        var nodeOf = [];
+        var ni = 0;
+        for (var t = 0; t < toks.length; t++) {
+          while (ni < kids.length && kids[ni].nodeType === 1 && kids[ni].tagName === "BR") ni++;
+          nodeOf[t] = kids[ni] || null;
+          ni++;
+        }
+        /* Spans report offsetWidth directly; a whitespace token is a text node and has to be
+           measured through a Range, or every Latin gap counts as zero and the plan drifts. */
+        var rr = root.getBoundingClientRect();
+        var k = rr.width / VW || 1;
+        var ws = [];
+        for (t = 0; t < toks.length; t++) {
+          var n = nodeOf[t];
+          if (!n) { ws.push(0); continue; }
+          if (n.nodeType === 1) { ws.push(n.offsetWidth); continue; }
+          var rg = document.createRange();
+          rg.selectNodeContents(n);
+          ws.push(rg.getBoundingClientRect().width / k);
+        }
+        var lines;
+        var hasHard = false;
+        for (var h in hardBreak) { hasHard = true; break; }
+        if (hasHard) {
+          /* Author-supplied lines win outright — never re-broken, never merged. */
+          lines = [[]];
+          for (t = 0; t < toks.length; t++) {
+            if (hardBreak[t] && lines[lines.length - 1].length) lines.push([]);
+            lines[lines.length - 1].push(t);
+          }
+        } else {
+          if (!boxW) return 1;
+          var wsum = 0;
+          for (t = 0; t < ws.length; t++) wsum += ws[t];
+          if (wsum <= boxW) return 1;
+          lines = HW.planLines(toks, ws, boxW, opts);
+        }
+        if (lines.length < 2) return lines.length;
+        for (var li = 1; li < lines.length; li++) {
+          var first = lines[li][0];
+          var node = nodeOf[first];
+          if (!node || !node.parentNode) continue;
+          node.parentNode.insertBefore(document.createElement("br"), node);
+        }
+        return lines.length;
+      },
+      /* Insert measured line breaks into a plain-text element so it fits its width.
+         Returns the number of lines. Shared by text(); words() has its own span-aware path. */
+      relineate: function (el, opts) {
+        var boxW = opt(opts, "w", el.offsetWidth || 0);
+        if (!boxW) return 1;
+        var s = el.textContent;
+        if (!s || !s.replace(/\s+/g, "")) return 1;
+        if (api.textExtent(el).w <= boxW) return 1;
+        var toks = HW.tokenize(s);
+        if (toks.length < 2) return 1;
+        var probe = document.createElement("div");
+        probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font:inherit;";
+        var spans = [];
+        for (var i = 0; i < toks.length; i++) {
+          var sp = document.createElement("span");
+          sp.style.display = "inline-block";
+          sp.textContent = toks[i];
+          probe.appendChild(sp);
+          spans.push(sp);
+        }
+        el.appendChild(probe);
+        var ws = [];
+        for (i = 0; i < spans.length; i++) ws.push(spans[i].offsetWidth);
+        el.removeChild(probe);
+        var lines = HW.planLines(toks, ws, boxW, opts);
+        var out = [];
+        for (i = 0; i < lines.length; i++) {
+          var t = "";
+          for (var j = 0; j < lines[i].length; j++) t += toks[lines[i][j]];
+          t = t.replace(/^\s+|\s+$/g, "");
+          if (t) out.push(t);
+        }
+        if (out.length > 1) el.textContent = out.join("\n");
+        return out.length;
       },
       /* Measure an element in COMPOSITION coordinates.
 
@@ -1567,15 +1759,21 @@
         var el = api.text("", opts);
         el.style.opacity = 1;
         var items = [];
+        /* An array (or an author's \n) is a semantic line split and is honoured exactly. */
+        var isArr = Object.prototype.toString.call(str) === "[object Array]";
+        var authored = isArr ? str.slice() : String(str).split("\n");
         /* Tokenizer: CJK and CJK punctuation one character at a time, then runs of Latin /
            digits / path characters, then whitespace, then a single-character catch-all.
            That final |[^\s] branch is load-bearing. Without it, characters matching no branch
            are silently dropped by String.match — `node scripts/x.mjs` rendered as
            `node scriptsx.mjs`. Regression-test with a path and a command line after editing. */
-        var chunks =
-          String(str).match(
-            /[一-鿿㐀-䶿　-〿＀-￯]|[A-Za-z0-9._\-\/:$%#@+=~&?!,;'"()[\]{}<>*^|\\]+|\s+|[^\s]/g
-          ) || [];
+        var chunks = [];
+        var hardBreak = {}; /* token index that must start a new line */
+        for (var a = 0; a < authored.length; a++) {
+          var part = HW.tokenize(authored[a]);
+          if (a > 0 && part.length) hardBreak[chunks.length] = true;
+          chunks = chunks.concat(part);
+        }
         for (var i = 0; i < chunks.length; i++) {
           if (/^\s+$/.test(chunks[i])) {
             el.appendChild(document.createTextNode(chunks[i]));
@@ -1591,6 +1789,13 @@
           s.__hwPending = true;
           if (svg.__hwPending) svg.__hwPending.push(s);
         }
+        /* Line breaks, inserted as <br> between spans. Under white-space:pre the browser will
+           not break a run of inline-blocks at all, so every break has to be placed here —
+           which is exactly the point: the break points are chosen by measurement and semantics
+           (HW.planLines), never by the browser's "anywhere between two CJK characters" rule.
+           A <br> measures 0x0 and is skipped by glyphBand/textExtent, so annotations, rings
+           and the fitter all keep measuring only the real glyphs. */
+        api.breakSpans(el, chunks, hardBreak, opts);
         /* Fit AFTER splitting, never before. Each word becomes an inline-block, and an
            inline-block cannot break in the middle — so "scenes-index", which the browser
            happily breaks at the hyphen while it is plain text, becomes one rigid box once
@@ -1878,6 +2083,7 @@
         if (esc > 1.5) out.push({ what: "text out of its box \"" + (divs[j].textContent || "").slice(0, 14) + "\"", by: Math.round(esc) });
       }
     }
+
     return out;
   };
 
@@ -1909,6 +2115,37 @@
     function escOf(r) {
       return Math.max(safe.x - r.x, safe.y - r.y, r.x + r.w - (safe.x + safe.w), r.y + r.h - (safe.y + safe.h));
     }
+    /* The on-screen box of the VISIBLE glyphs inside a text div, transforms included, in
+       composition coordinates. Spans when the text was split for word stagger, a Range
+       otherwise.
+
+       Per-span opacity is what decides visibility, not the container's. S.words() leaves the
+       container at opacity 1 and hides the individual words, so a block whose turn has not
+       come yet still measures as a full-size visible box — which is how a toggle's incoming
+       label looked like it was sitting on top of the outgoing one for the whole shot. */
+    function glyphRect(d, rr2, k2, hostOp) {
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      var kids = d.children;
+      if (kids && kids.length) {
+        for (var i2 = 0; i2 < kids.length; i2++) {
+          var c2 = kids[i2];
+          if (c2.tagName === "BR") continue;
+          if (hostOp * (parseFloat(getComputedStyle(c2).opacity) || 0) < 0.6) continue;
+          var q = c2.getBoundingClientRect();
+          if (!q.width && !q.height) continue;
+          x0 = Math.min(x0, q.left); y0 = Math.min(y0, q.top);
+          x1 = Math.max(x1, q.right); y1 = Math.max(y1, q.bottom);
+        }
+        if (!isFinite(x0)) return null; /* split text with nothing revealed yet */
+      } else {
+        var rg = document.createRange();
+        rg.selectNodeContents(d);
+        var g = rg.getBoundingClientRect();
+        if (!g.width && !g.height) return null;
+        x0 = g.left; y0 = g.top; x1 = g.right; y1 = g.bottom;
+      }
+      return { x: (x0 - rr2.left) / k2, y: (y0 - rr2.top) / k2, w: (x1 - x0) / k2, h: (y1 - y0) / k2 };
+    }
     var paths = S.svg.querySelectorAll("path");
     var divs = S.layer.querySelectorAll(":scope > div");
     tl.pause();
@@ -1924,14 +2161,46 @@
         var e = escOf(S.boundsOf(p));
         if (e > tol) note("p" + i, "shape", e - tol);
       }
+      var lit = [];
       for (var j = 0; j < divs.length; j++) {
         var d = divs[j];
         if (d.getAttribute("data-hw-bleed") !== null) continue;
-        if (parseFloat(getComputedStyle(d).opacity) < 0.04) continue;
+        var op = parseFloat(getComputedStyle(d).opacity);
+        if (op < 0.04) continue;
         var b = d.getBoundingClientRect();
         if (!b.width && !b.height) continue;
-        var e2 = escOf({ x: (b.left - rr.left) / k, y: (b.top - rr.top) / k, w: b.width / k, h: b.height / k });
+        var box = { x: (b.left - rr.left) / k, y: (b.top - rr.top) / k, w: b.width / k, h: b.height / k };
+        var e2 = escOf(box);
         if (e2 > 3) note("d" + j, "text \"" + (d.textContent || "").slice(0, 14) + "\"", e2 - 3);
+        /* Only blocks that are properly ON screen take part in the collision test. A crossfade
+           legitimately has two blocks in the same place while one is at 0.3 and climbing.
+           And the box has to be the GLYPH extent, not the container: a centred title is
+           routinely given w:1200 while its text is 300px wide, so comparing container boxes
+           would report every second card as a collision. */
+        if (op > 0.6 && (d.textContent || "").replace(/\s+/g, "")) {
+          var gb = glyphRect(d, rr, k, op);
+          if (gb) lit.push({ i: j, box: gb, label: (d.textContent || "").replace(/\s+/g, " ").slice(0, 14) });
+        }
+      }
+      /* Text sitting on top of other text, checked where visibility is real — at t=0 every
+         block is still parked at opacity 0, so the static audit cannot tell a genuine collision
+         from a flip card whose two faces share a slot by design. The failure this catches is
+         the one that actually ships: a line landing across another line, both fully drawn.
+         Text height follows font metrics that cannot be predicted while authoring coordinates,
+         so it has to be measured. Mark a deliberate overlay with data-hw-bleed. */
+      for (var u = 0; u < lit.length; u++) {
+        for (var v = u + 1; v < lit.length; v++) {
+          var A = lit[u].box, B = lit[v].box;
+          var ox = Math.min(A.x + A.w, B.x + B.w) - Math.max(A.x, B.x);
+          var oy = Math.min(A.y + A.h, B.y + B.h) - Math.max(A.y, B.y);
+          if (ox > 3 && oy > 3) {
+            note(
+              "x" + lit[u].i + "-" + lit[v].i,
+              'text over text "' + lit[u].label + '" / "' + lit[v].label + '"',
+              Math.min(ox, oy)
+            );
+          }
+        }
       }
     }
     tl.time(was, true);
