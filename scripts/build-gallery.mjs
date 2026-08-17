@@ -2,14 +2,18 @@
 /**
  * build-gallery.mjs — 重建 64 格动图墙
  *
- * 用法：node scripts/build-gallery.mjs
+ * 用法：node scripts/build-gallery.mjs [--emit <dir>]
  *
  * 把 assets/ 下的引擎、卡库、字体全部内联进 playground/index.html，产出一个
  * 自包含的单文件——断网、拷到别的机器、直接双击都能看。
  *
  * 改了 assets/hw-kit.js 或 assets/hw-cards.js 之后跑这个，墙才会跟着变。
+ *
+ * --emit docs：额外把墙发射成「不装就能看见」的入库产物（docs/index.html +
+ * 每卡静帧 + wall.gif），截帧和合成都在 emit-docs.mjs 里。不带 flag 时行为不变。
  */
 
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,3 +53,10 @@ console.log(
   `◇ playground/index.html 重建完成 —— ${cards} 张卡 / ${(html.length / 1048576).toFixed(2)} MB 自包含`
 );
 console.log(`  open ${P("index.html")}`);
+
+const emitAt = process.argv.indexOf("--emit");
+if (emitAt !== -1) {
+  const dir = process.argv[emitAt + 1];
+  if (!dir) { console.error("✗ --emit 后面要跟目标目录，例如 --emit docs"); process.exit(1); }
+  execFileSync(process.execPath, [join(SKILL, "scripts", "emit-docs.mjs"), dir], { stdio: "inherit" });
+}

@@ -13,7 +13,7 @@
     "agent-skill",
     "hyperframes"
   ],
-  "homepage": "https://github.com/derek-zhuolin/VideoHand#readme",
+  "homepage": "https://derek-zhuolin.github.io/VideoHand/",
   "bugs": "https://github.com/derek-zhuolin/VideoHand/issues",
   "repository": {
     "type": "git",
@@ -37,6 +37,7 @@
     "tools/",
     "SKILL.md",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
   "scripts": {
