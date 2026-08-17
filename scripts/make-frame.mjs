@@ -193,8 +193,8 @@ function genFrame(f) {
           var CFG = ${JSON.stringify(f.cfg, null, 12).replace(/\n\s*}$/, "\n          }")};
           var DUR = ${f.dur};
           var SEED = ${f.seed};
-          /* 卡库里的 pick 解析双语 {en,zh}；spec 里给的是纯字符串，直通即可 */
-          function pick(v) { return typeof v === "string" ? v : (v && (v.zh || v.en)) || ""; }
+          /* 卡库里的 pick 解析双语 {en,zh}；spec 里给的是纯字符串或数组（如 nodes），直通即可 */
+          function pick(v) { return typeof v === "string" || Array.isArray(v) ? v : (v && (v.zh || v.en)) || ""; }
 
           var S = HW.stage("#root", { w: ${W}, h: ${H}, id: COMP });
           var tl = gsap.timeline({ paused: true });
