@@ -1,8 +1,14 @@
-# handdrawn
+# videohand
 
 **给一段文字，出一支像是随手画在纸上的小视频。**
 
 [![CI](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml/badge.svg)](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/videohand.svg)](https://www.npmjs.com/package/videohand)
+[![node](https://img.shields.io/node/v/videohand.svg)](https://nodejs.org)
+
+```bash
+npx videohand
+```
 
 不是把字打进模板，是让每一句话自己决定它该长什么样。
 
@@ -70,59 +76,115 @@ Excalidraw 自己那套手绘渲染引擎，字体也沿用 Excalidraw 的官方
 
 ## 装
 
-一条命令：
+```bash
+npx videohand
+```
+
+完事。**你需要预先装好的东西只有一样：[Node](https://nodejs.org) ≥ 20。**
+
+其余的别担心：
+
+| 东西 | 要不要你操心 |
+|---|---|
+| **HyperFrames**（渲染引擎） | **不用**。`npx` 现拉现用，不预装 |
+| **rough.js / GSAP / 字体** | **不用**。都在包里，离线可用 |
+| **git** | **不用**（走 `npx` 的话） |
+| **ffmpeg** | 只有**最后渲成 MP4** 那一步要。前面选卡、建帧、看效果都不需要 |
+| 某家模型 / 某个 API key | **不用**。这个目录就是 skill 本身，不绑定任何一家 |
+
+`npx videohand` 会探测你本机装了哪些 agent（Claude Code / agents / Codex / Cursor /
+Crush / Gemini / WorkBuddy），往每个**已经存在**的 skill 目录里装一份。没装的工具
+不去凭空建目录 —— 那只会在你机器上留一堆你从没用过的空壳。
+
+装完先看看它能画什么：
+
+```bash
+npx videohand playground     # 生成 64 张卡的动图墙，浏览器里直接看
+```
+
+### 另外两条路
+
+想跟着仓库走、随时能 `git pull` 和改代码：
+
+```bash
+git clone https://github.com/derek-zhuolin/VideoHand.git ~/.claude/skills/videohand
+node ~/.claude/skills/videohand/tools/doctor.mjs
+```
+
+或者让脚本替你探测 agent 目录再 clone（等价于 `npx videohand`，只是走 git）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/derek-zhuolin/VideoHand/main/tools/install.sh | bash
 ```
 
-它会**探测你本机装了哪些 agent**（Claude Code / agents / Codex / Cursor / Crush /
-Gemini），往每个已经存在的 skill 目录里 clone 一份，生成 64 张卡的动图墙，
-最后跑一遍自检把结果打给你看。已经存在的目录不覆盖 —— 那里面可能有你没提交的改动，
-遇到就停下来报告，让你自己决定。
+三条路装出来的东西一样。**选 npx 如果你只想用它，选 git clone 如果你想改它。**
 
-不想执行来路不明的脚本（合理），就手动：
+### 从 handdrawn 升级过来
+
+这个 skill 以前叫 `handdrawn`，现在跟仓库名统一成了 `videohand`。斜杠命令
+相应地从 `/handdrawn` 变成 `/videohand`。
 
 ```bash
-git clone https://github.com/derek-zhuolin/VideoHand.git ~/.claude/skills/handdrawn
-node ~/.claude/skills/handdrawn/tools/doctor.mjs        # 自检
-node ~/.claude/skills/handdrawn/scripts/build-gallery.mjs && \
-  open ~/.claude/skills/handdrawn/playground/index.html  # 看看能画什么
+npx videohand      # 它会自己认出旧目录
 ```
+
+- 旧目录是**干净的 git 仓库** → 直接改名搬过去，无损。
+- 旧目录**说不清里面有没有你的改动**（有未提交的东西，或者压根不是仓库）→
+  **一个字节都不动**，只提醒你。确认没用了自己 `rm -rf` 再重跑。
+
+第二条是有意做得保守的：搬完紧接着就是覆盖写，判错一次就是**静默的数据丢失**。
+裸目录的麻烦在于它看起来"很干净"，只是因为它根本没法说自己脏。
 
 ### 装不上的时候
 
-先跑自检，它会把"跑不起来"拆成几种不同的原因，每条都带一句能直接粘贴的命令：
+先跑自检。它把"跑不起来"拆成几种不同的原因，每条都带一句能直接粘贴的命令：
 
 ```bash
-node tools/doctor.mjs
+npx videohand doctor
 ```
 
-查这六件事：Node 版本、ffmpeg、skill 的件是否齐、**中文字体是不是被换成了 LFS 指针**
-（1.4 MB 的字体常在 clone 时变成几十字节，现象是中文全部掉回系统宋体）、
-npx 拉不拉得到 hyperframes（多半是 registry 不通，它会给你镜像命令）、
-以及**你装的位置 agent 认不认**。
+查这六件事：Node 版本、ffmpeg、skill 的件是否齐、**中文字体是不是被截成了指针**
+（1.4 MB 的字体常在传输中变成几十字节，症状是**片子照出，但中文全部掉回系统宋体**
+—— 不盯着成片看根本发现不了）、npx 拉不拉得到 hyperframes（多半是 registry 不通，
+它会给你镜像命令）、以及**你装的位置 agent 认不认**。
 
-需要的东西只有：Node ≥ 20、ffmpeg、以及
-[HyperFrames](https://hyperframes.heygen.com/)（`npx` 直接调，不用预装）。
-**不绑定任何一家模型** —— 整个目录就是 skill 本身。
+还是不行就[开个 issue](https://github.com/derek-zhuolin/VideoHand/issues/new/choose)，
+把 `doctor` 的完整输出贴上。
 
-### 为什么是 clone，不是复制、也不是软链
+### 怎么知道自己旧了
+
+装完就跟上游断了联系 —— 上游修了一个「要渲一支片才看得见」的 bug，你那份不会自己知道。
+所以 `videohand` 和 `doctor` 每次跑完会顺手比一下 npm 上的版本，落后就提醒你：
+
+```
+◇ 有新版 2.2.0（你在用 2.1.0）
+  升级：npx videohand@latest install
+```
+
+这个检查被刻意做得很怂：**异步不阻塞、1.5 秒超时、查不到就当没这回事、结果缓存 24
+小时**。断网、内网、registry 不通都不会让它失败或变慢。嫌烦就
+`export VIDEOHAND_NO_UPDATE_CHECK=1` 彻底关掉。
+
+git clone 装的那份不吃这套提醒，用 `git -C ~/.claude/skills/videohand pull` 拉。
+
+### 为什么不是复制、也不是软链
 
 复制会得到 N 份各自漂移的副本 —— 改了一份，其余 N-1 份还是老的，而你不知道哪个
 agent 在用哪份。这个坑踩过不止一次：某个 skill 目录里躺着一份旧拷贝，于是
 「仓库修好了、成片还是老问题」，排查很久才发现根本不在同一份代码上。
 
 软链看似解决了漂移，但它把"指向哪里"变成一个看不见的状态，出问题时更难查。
-clone 的好处是**每一份都能 `git log` 自证版本**，一眼就知道谁老了。要拉齐：
 
-```bash
-git -C ~/.claude/skills/handdrawn pull
-```
+**真正的规矩不是"必须是 git"，是「每一份都必须能自证版本」。** git 只是当时唯一
+趁手的实现 —— `git log` 一敲就知道自己是哪版。`npx videohand install` 装出来的
+虽然是复制体，但它带一份 `.videohand-install.json`（版本 + 引擎 + 来源 + 时间），
+一样张得开嘴，所以一样算数。
+
+真正判 ✗ 的只剩第三种：**既不是仓库、也没有戳的裸拷贝**。
 
 ### 漂移这件事，别指望自己发现
 
-"坏了就删"防不住 —— **因为你看不出它坏了**。实测过一次：本机同时有两份 handdrawn，
+"坏了就删"防不住 —— **因为你看不出它坏了**。实测过一次：本机同时有两份 videohand，
 目录结构、文件名、大部分内容都一模一样，只有一份带着已经修好的 bug。
 差别要**渲一支片出来**才看得见。
 
@@ -130,7 +192,7 @@ git -C ~/.claude/skills/handdrawn pull
 
 | 规矩 | 谁来查 |
 |---|---|
-| skill 目录里只允许有 git 仓库，不允许有实体拷贝 | `node tools/doctor.mjs` 的副本盘点 |
+| skill 目录里的每一份都得能说出自己是哪版（git 仓库，或带安装戳） | `npx videohand doctor` 的副本盘点 |
 | 每支片带的 `assets/` 必须跟 skill 那份逐字节一致 | `portability-lint` 第四条，按内容哈希比 |
 
 第二条尤其容易中招：建片时会把 `assets/` 复制进片目录，**改完 skill 的引擎不同步过去，
@@ -268,7 +330,7 @@ node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面�
 ## 目录
 
 ```
-handdrawn/
+videohand/
 ├── SKILL.md                    # agent 读这个
 ├── README.md                   # 你在读的这个
 ├── assets/
@@ -285,9 +347,11 @@ handdrawn/
 │   ├── pitfalls.md             # 坑位全录（40 条实测，第七节＝合成之后才发作的）
 │   └── voice-pipeline.md       # 配音契约（不绑定任何 TTS 厂商）
 ├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
-├── tools/                      # install.sh / doctor.mjs / gate.mjs / frame-audit.py
+├── tools/                      # install.sh / doctor.mjs / update-check.mjs / gate.mjs / frame-audit.py
+├── bin/videohand.mjs           # npx videohand 的入口
+├── package.json                # npm 包（files 白名单，生成物不进包）
 ├── templates/                  # 帧脚手架 + 字幕皮肤
-├── playground/index.html       # 64 格动图墙，双击就能看
+├── playground/index.html       # 64 格动图墙，双击就能看（生成物，不进 npm 包）
 └── evals/                      # 3 个评估场景，改 skill 之后跑它
 ```
 

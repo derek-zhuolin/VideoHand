@@ -131,11 +131,11 @@ if (stage === 2) {
   console.log(`${c.exit === 0 ? "✓" : "✗"} npm run check — 退出码 ${c.exit}`);
 }
 /* motion-quality 那个 motion-lint **只认 `tools/build-frames.mjs` 和 `src/` 里的源码**。
-   handdrawn 的帧是 `compositions/frames/*.html`，它一条都读不到 —— 于是打印
+   videohand 的帧是 `compositions/frames/*.html`，它一条都读不到 —— 于是打印
    「blur 0 处 / 缝 0 条」然后 exit 0。判据①②实际是零样本的**空过**，闸照样报 ✓。
    实测踩过：闸报 motion-lint 退出码 0，而帧里真有两处 30ms / 40ms 的错峰。
 
-   所以：**看得见帧的那个 lint 必须一起跑。** handdrawn 自带的 scene-lint / motion-lint
+   所以：**看得见帧的那个 lint 必须一起跑。** videohand 自带的 scene-lint / motion-lint
    直接读 STORYBOARD.md 和 compositions/frames/*.html，它俩才是这条出片线上真正的闸。 */
 /* lint 的寻址：先找 gate.mjs **自己旁边**的（skill 仓库里 tools/ 和 scripts/ 是邻居，
    clone 下来即用，不依赖任何 harness 目录），找不到再退到 ~/.claude/skills/ ——
@@ -146,21 +146,21 @@ function findScript(...candidates) {
   for (const c of candidates) if (existsSync(c)) return c;
   return candidates[candidates.length - 1];   // 都没有就报最后那个，错误信息里见得到路径
 }
-const HD_SCRIPTS_HOME = join(homedir(), ".claude", "skills", "handdrawn", "scripts");
+const HD_SCRIPTS_HOME = join(homedir(), ".claude", "skills", "videohand", "scripts");
 const sceneLint = findScript(join(SELF_DIR, "..", "scripts", "scene-lint.mjs"), join(HD_SCRIPTS_HOME, "scene-lint.mjs"));
 const hdMotion  = findScript(join(SELF_DIR, "..", "scripts", "motion-lint.mjs"), join(HD_SCRIPTS_HOME, "motion-lint.mjs"));
 const mqLint    = join(homedir(), ".claude", "skills", "motion-quality", "scripts", "motion-lint.mjs");
 
-const isHanddrawn = existsSync(join(proj, "compositions", "frames"));
+const isVideohand = existsSync(join(proj, "compositions", "frames"));
 const LINTS = [];
-/* motion-quality 是外部 skill，装了就跑、没装不算失败 —— 但前提是下面 handdrawn 的
+/* motion-quality 是外部 skill，装了就跑、没装不算失败 —— 但前提是下面 videohand 的
    motion-lint 在场。**至少要有一个真读帧的 lint 跑过**，一个都没有才是失败。 */
 if (existsSync(mqLint)) LINTS.push({ name: "motion-lint（通用三判据）", bin: mqLint, args: [], optional: true });
-else console.log("ℹ 未装 motion-quality skill，通用三判据跳过（handdrawn 的 motion-lint 仍会真读帧）");
-if (isHanddrawn) {
+else console.log("ℹ 未装 motion-quality skill，通用三判据跳过（videohand 的 motion-lint 仍会真读帧）");
+if (isVideohand) {
   // 选卡纪律只读 STORYBOARD，跟建了几格无关；但闸①的语义是「材质对不对」，别拿选卡去烦它
-  if (stage === 2) LINTS.push({ name: "scene-lint（handdrawn）", bin: sceneLint, args: ["."] });
-  LINTS.push({ name: "motion-lint（handdrawn · 真读帧）", bin: hdMotion, args: ["."] });
+  if (stage === 2) LINTS.push({ name: "scene-lint（videohand）", bin: sceneLint, args: ["."] });
+  LINTS.push({ name: "motion-lint（videohand · 真读帧）", bin: hdMotion, args: ["."] });
 }
 let frameLintRan = false;
 for (const L of LINTS) {
@@ -175,7 +175,7 @@ for (const L of LINTS) {
   if (m.exit !== 0) console.log(m.out.slice(-1500));
   if (!L.optional) frameLintRan = true;
 }
-if (isHanddrawn && !frameLintRan) {
+if (isVideohand && !frameLintRan) {
   // 零样本不等于通过：一个真读帧的 lint 都没跑成，闸不能装作查过了
   checks.push({ name: "frame-lint 覆盖", exit: 127, ok: false, tail: "没有任何一个读得懂 compositions/frames 的 lint 跑过" });
   console.log("✗ 没有任何一个真读帧的 lint 在场 —— 判据①②等于零样本");

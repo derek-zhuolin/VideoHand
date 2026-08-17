@@ -1,0 +1,46 @@
+{
+  "name": "videohand",
+  "version": "2.1.0",
+  "description": "把一段文字做成纸面马克笔手绘风格的小视频 —— 64 张画面卡、rough.js 笔画原语、安全区与三画幅自适应。给 Claude Code / Codex / Cursor 等 agent 用的 skill。",
+  "keywords": [
+    "handdrawn",
+    "sketch",
+    "video",
+    "animation",
+    "roughjs",
+    "gsap",
+    "claude-code",
+    "agent-skill",
+    "hyperframes"
+  ],
+  "homepage": "https://github.com/derek-zhuolin/VideoHand#readme",
+  "bugs": "https://github.com/derek-zhuolin/VideoHand/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/derek-zhuolin/VideoHand.git"
+  },
+  "license": "MIT",
+  "author": "derek-zhuolin",
+  "type": "module",
+  "bin": {
+    "videohand": "./bin/videohand.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin/",
+    "assets/",
+    "references/",
+    "scripts/",
+    "templates/",
+    "tools/",
+    "SKILL.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "doctor": "node tools/doctor.mjs",
+    "playground": "node scripts/build-gallery.mjs"
+  }
+}

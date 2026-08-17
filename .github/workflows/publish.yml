@@ -1,0 +1,73 @@
+name: Publish
+
+# 把「Derek 打了个 tag」变成「所有装过的人都能收到更新提示」。
+#
+# 链路是这样接起来的：
+#   打 tag v2.2.0  →  这个 workflow 发 npm  →  registry 的 latest 变了
+#                  →  用户下次跑 videohand / doctor 时，update-check 比对到落后
+#                  →  打印「有新版 2.2.0，升级：npx videohand@latest install」
+#
+# 所以**发布是提醒的前提**：不发 npm，用户那份就永远不知道自己旧了。
+#
+# 一次性准备（只需做一次）：
+#   1. npmjs.com 生成 Automation token（要 Automation 那种，否则 2FA 会挡住 CI）
+#   2. 仓库 Settings → Secrets and variables → Actions → 新建 NPM_TOKEN
+#
+# 发一版：
+#   npm version minor -m "release: %s"   # 会自动改 package.json 并打 tag
+#   git push --follow-tags
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:          # 也允许手动发，方便补发
+
+jobs:
+  publish:
+    name: 发到 npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write         # npm provenance 要它 —— 让用户能验包确实来自这个仓库
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      # ── 发布前的三道闸 ──────────────────────────────────
+      # npm 发布是**不可逆**的：版本号一旦占用就不能重发，72 小时后连撤都撤不了。
+      # 所以宁可在这里多拦几道，也不要发出去一个坏包。
+
+      - name: 闸一 · tag 必须和 package.json 的版本对得上
+        # 防的是「改了 package.json 忘了打 tag」和「打了 tag 忘了改版本」——
+        # 两者都会让 registry 上的版本和仓库里的对不上，之后再也理不清。
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./package.json').version")
+          echo "tag=$TAG  package.json=$PKG"
+          test "$TAG" = "$PKG" || { echo "✗ 对不上，先改版本或重打 tag"; exit 1; }
+
+      - name: 闸二 · 中文字体必须完整
+        # 这个仓库最隐蔽的坑。发一个字体被截断的包出去，用户那边片子照出，
+        # 只是中文全部掉回系统宋体 —— 等有人报上来，坏版本已经装了几十台机器。
+        run: |
+          npm pack
+          tar -xzf videohand-*.tgz
+          SIZE=$(wc -c < package/assets/fonts/Xiaolai-subset.woff2)
+          echo "中文字体 $SIZE 字节"
+          test "$SIZE" -gt 1000000 || { echo "✗ 字体被截断，不许发"; exit 1; }
+
+      - name: 闸三 · 包必须装得上、doctor 必须过
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          npm install -g ./videohand-*.tgz
+          videohand install
+          videohand doctor
+
+      - name: 发布
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

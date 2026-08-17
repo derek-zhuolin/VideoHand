@@ -2,7 +2,7 @@
 
 ```json
 {
-  "skills": ["handdrawn"],
+  "skills": ["videohand"],
   "query": "We shipped a CLI that turns a folder of screenshots into a contact sheet. Make me a hand-drawn video about it: what it is, the three things it does, how you run it, and where to get it.",
   "files": [],
   "expected_behavior": [

@@ -1555,7 +1555,7 @@ window.CARDS = [
     name: "sign-off", family: "I closing",
     note: "merges frame-corner-sign + stamp-seal-end — variant: border | stamp",
     line: "A drawn border with corner flourishes, or a stamp slamming beside the sign-off",
-    cfg: { variant: "border", sign: { en: "Handdrawn", zh: "手绘涂鸦" }, sub: { en: "64 scene cards", zh: "六十四张画面卡" } },
+    cfg: { variant: "border", sign: { en: "Videohand", zh: "手绘涂鸦" }, sub: { en: "64 scene cards", zh: "六十四张画面卡" } },
     build: function (S, tl, CFG, SEED) {
       var stamp = CFG.variant === "stamp";
       var textSlot = S.slots.center(0.7, 0.24, { dy: stamp ? -0.02 : 0 });
