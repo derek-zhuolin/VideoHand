@@ -274,7 +274,8 @@ videohand/
 │   ├── pitfalls.md             # 坑位全录（40 条实测，第七节＝合成之后才发作的）
 │   └── voice-pipeline.md       # 配音契约（产物契约，不绑 TTS 厂商）
 ├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
-├── tools/                      # install.sh / doctor.mjs（装机）+ gate.mjs / frame-audit.py（像素闸）
+├── tools/                      # install.sh / doctor.mjs / update-check.mjs（装机）+ gate.mjs / frame-audit.py（像素闸）
+├── bin/videohand.mjs           # npx videohand 的入口（装 / 自检 / 动图墙）
 ├── templates/                  # 帧脚手架 + 字幕皮肤
 └── playground/index.html       # 64 格动图墙，双击就能看
 ```
