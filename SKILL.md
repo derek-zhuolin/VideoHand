@@ -1,6 +1,6 @@
 ---
 name: videohand
-description: 把一段文字做成纸面马克笔手绘风格的小视频。逐句按语义选画面卡（64 张可选，相邻不重样），rough.js 笔画原语建帧，安全区 + 三画幅自适应，可选配音与词级手绘字幕。当用户要做手绘 / 涂鸦 / 白板风格的解说短片、观点片、上新片时用它。
+description: 把一段文字做成纸面马克笔手绘风格的小视频（videohand）。逐句按语义选画面卡（64 张可选，相邻不重样），rough.js 笔画原语建帧，安全区 + 三画幅自适应（9:16 / 16:9 / 1:1），可选配音与词级手绘字幕，渲染前过五道闸。当用户要做手绘 / 涂鸦 / 白板 / sketch 风格的解说短片、观点片、上新片、知识拆解、教程视频时用它，或用户直接点名 videohand / handdrawn 时用它。
 ---
 
 # videohand
@@ -17,13 +17,13 @@ description: 把一段文字做成纸面马克笔手绘风格的小视频。逐�
 
 ---
 
-## 先看效果
+## 先看有哪些画面可选
 
-```bash
-open playground/index.html
-```
+`playground/index.html` 是 64 张卡的动图墙，每格跑的是那张卡的**真实代码** ——
+所以它同时是 64 张卡的冒烟测试，哪张写错了那格会红着报错。
+没生成过就先跑 `node scripts/build-gallery.mjs`。
 
-64 张卡在墙上循环播，每格跑的是那张卡的真实代码。顶部可切 9:16 / 16:9 / 1:1 和中英文，四个滑杆实时调笔触。**这面墙同时是 64 张卡的冒烟测试**——哪张写错了那格会红着报错。
+**选卡之前先看一眼这面墙，比读文档快。**
 
 ---
 
@@ -74,7 +74,7 @@ open playground/index.html
 
 > 中间四条为什么是红线：它们**只在子合成被合进主合成之后才发作**，
 > 单帧预览和 playground 永远是对的。一次实测的后果是整支片手绘笔画全灭、
-> 七帧叠成一坨、两帧直接空白，而当时四道闸全绿。账见 `references/pitfalls.md` 第七节。
+> 七帧叠成一坨、两帧直接空白，而当时四道闸全绿。账见 `references/pitfalls.md` 第八节。
 
 ### 4 · 自检
 
@@ -95,7 +95,7 @@ node scripts/portability-lint.mjs <片目录>   # 跨平台（合成之后才发
 npm run check                         # 渲染错误 + 对比度 —— 连 Runtime 段一起看
 node scripts/scene-lint.mjs  <片目录>   # 选卡纪律（查 STORYBOARD，看不见画面）
 node scripts/motion-lint.mjs <片目录>   # 动效尺度
-node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面审计（随包在 tools/，工作台开跑时会自动拷进工程）
+node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面审计（随包在 tools/）
 ```
 
 **五个都得退出 0 才能渲。**
@@ -118,7 +118,7 @@ node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面�
 
 > **为什么闸长这样、怎么给别的出片线套一套同样的闸**：见 `tools/README.md`。
 > 这条 skill 踩过的具体坑在 `references/pitfalls.md`：
-> 版面 / 转场 / 验收在第六节，**合成之后才发作的那一类在第七节**。
+> 版面 / 转场 / 验收在第六节，**合成之后才发作的那一类在第八节**。
 
 ---
 
@@ -181,9 +181,6 @@ I 族落版卡最容易做成孤零零一行字加个箭头，那**撑不起收�
 
 ## 字幕（`HW.captions`）
 
-以前这一节不存在：kit 预留了 `CAPTION_RESERVE` 却**没有任何字幕渲染器**，
-description 里却写着「词级手绘字幕」。名不副实，而且底部那条带子一直空着。
-
 ```js
 HW.captions(tl, S, [
   { t: 0.0, d: 2.1, text: "做内容不用会剪辑", key: "不用会剪辑" },
@@ -202,9 +199,8 @@ HW.captions(tl, S, [
   `HW.wrapZh` 会在标点和连词处断（中文没有词间空格，按字数硬折会把词劈开 ——
   实测出过「真实的观 / 点 / 细节」），但它只保证不劈词，**不负责替你把长句切短**。
 - **一条里只有一个重点词**（`key`）。全高亮等于没高亮。
-- **字号比主体明显小一档**（默认 `S.short * 0.044`，竖屏约 48px）。
-  以前是 0.052（约 56px）—— 两行中文几乎顶满整条带子，胶带被撑成一块板，抢主体。
-  字幕是跟读用的第二条通道，不是标题：扫一眼就该回到画面上。
+- **字号比主体明显小一档**：`S.short * 0.044`（竖屏约 48px）。再大一档两行中文就顶满
+  整条带子，胶带被撑成一块板，开始抢主体。字幕是跟读用的第二条通道，不是标题。
   长句别靠调大字号救，靠 `HW.wrapZh` 断成两行短句。
 
 ---
@@ -212,8 +208,7 @@ HW.captions(tl, S, [
 ## 转场（`hw-trans.js`）
 
 **一条缝是两半：上一格盖上、下一格揭开，两半同一个 SEED。**
-以前这里没有实现，每帧各抄两百行，改一条约束要改七处 —— 而且抄漏「揭开」那半
-是最常见的翻车（涂满 → 硬切 → 半秒白场）。
+抄漏「揭开」那半是最常见的翻车 —— 涂满 → 硬切 → 半秒白场。
 
 把 `assets/hw-trans.js` 跟 kit 一起引进帧里，每格就只剩两行：
 
@@ -224,10 +219,7 @@ X.TI["paper-slide"](SEAM_IN);              // 开头：把上一格的盖子揭�
 X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 ```
 
-**opacity 闸现在长在 `HW.draw` 里，直接用就行。**
-以前这道闸在 `X.D` 里，规矩是「建帧里画任何东西都走 X.D，别直接用 HW.draw」——
-结果一支片七帧全忘了，转场涂抹从第 0 秒糊到最后。
-靠人记得绕开默认路径的规矩迟早会被忘掉，所以闸挪进了引擎；`X.D` 留着只为兼容。
+**opacity 闸长在 `HW.draw` 里，直接用就行**（`X.D` 只为兼容保留，不必用）。
 
 一格的两半互不知情，所以缝的账要在 STORYBOARD 里记清楚：
 哪条缝用哪种、SEAM SEED 是几。硬切两侧都不写。
@@ -255,30 +247,23 @@ X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 
 ---
 
-## 目录
+## 什么时候读哪个文件
 
-```
-videohand/
-├── SKILL.md                    # 你在读的这个
-├── assets/
-│   ├── hw-kit.js               # 引擎：笔画原语 + 槽位 + 编排器 + 审计 + 字幕
-│   ├── hw-cards.js             # 64 张卡的 build 函数（唯一真源）
-│   ├── hw-trans.js             # 转场的两半（盖上 / 揭开），每帧两行调用
-│   ├── fonts/                  # Excalifont + 小赖子集
-│   └── vendor/                 # rough.js + gsap
-├── references/
-│   ├── scenes-index.md         # ← 选卡从这里查
-│   ├── layout.md               # 安全区 / 画幅自适应 / 槽位 / 入框契约
-│   ├── palette.md              # 配色与对比度算账、字体子集化
-│   ├── transitions.md          # 8 种手绘转场
-│   ├── pitfalls.md             # 坑位全录（40 条实测，第七节＝合成之后才发作的）
-│   └── voice-pipeline.md       # 配音契约（产物契约，不绑 TTS 厂商）
-├── scripts/                    # portability-lint / scene-lint / motion-lint / build-gallery
-├── tools/                      # install.sh / doctor.mjs / update-check.mjs（装机）+ gate.mjs / frame-audit.py（像素闸）
-├── bin/videohand.mjs           # npx videohand 的入口（装 / 自检 / 动图墙）
-├── templates/                  # 帧脚手架 + 字幕皮肤
-└── playground/index.html       # 64 格动图墙，双击就能看
-```
+**别预读。** 下面每一份都只在真的走到那一步时才打开：
+
+| 你正要做的事 | 读这个 |
+|---|---|
+| 选卡（第 2 步） | `references/scenes-index.md` — 按形状查卡名 |
+| 抄某张卡的实现 | `assets/hw-cards.js` — **卡的代码是唯一真源** |
+| 算版面 / 画幅 / 槽位 | `references/layout.md` |
+| 配色、对比度、字体子集化 | `references/palette.md` |
+| 挑转场、算 SEED | `references/transitions.md` |
+| 配音、字幕时间戳 | `references/voice-pipeline.md` |
+| 出了怪事，尤其是「合成之后才发作」的 | `references/pitfalls.md` 第八节 |
+| 想给别的出片线套同一套闸 | `tools/README.md` |
+
+`assets/hw-kit.js` 是引擎（笔画原语 + 槽位 + 编排器 + 审计 + 字幕），
+接口在本文件里已经写全，**不必整份读它**。
 
 ---
 
@@ -300,8 +285,5 @@ videohand/
 2. 在 `references/scenes-index.md` 的表里加一行
 3. `node scripts/build-gallery.mjs` 重建 `playground/index.html`，打开看那格红不红
 
-## 致谢
-
-- [rough.js](https://roughjs.com) — MIT，手绘渲染引擎
-- [Excalidraw](https://excalidraw.com) — MIT，字体与画风底座
-- [wired-elements](https://github.com/rough-stuff/wired-elements) — MIT © Preet Shihn，7 张 UI 组件卡的绘制配方来源
+改完 skill 本身，跑一遍 `evals/` 里的三个场景对照基线 —— 视频 skill 的失败方式
+（镜头重复、跑偏画风、拿占位符充数）单元测试抓不到。
