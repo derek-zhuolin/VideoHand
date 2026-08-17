@@ -51,16 +51,34 @@ description: 把一段文字做成纸面马克笔手绘风格的小视频（vide
 | 呼吸帧 | ≥1 处低能镜头，`quote-bracket-hold` 是标准答案 |
 | 转场 | 只用手绘转场（8 种见 `references/transitions.md`），相邻两条缝不许同一种，全片种类 ≥ ⌈缝数/2⌉ |
 
+**选完卡、写完 STORYBOARD，立刻跑：**
+
+```bash
+node scripts/scene-lint.mjs <片目录>
+```
+
+它只读 STORYBOARD，几秒出结果。**别等建完帧再跑** —— 选卡纪律违规在这一步修
+是改一行计划，拖到五道闸那一步修是重建整格帧。同一道闸，提前跑，省掉最贵的一类返工。
+
 ### 3 · 建帧
 
-选定卡名后：**打开 `assets/hw-cards.js` 搜这个卡名，抄它的 `build` 函数，改 `cfg` 里的文案。**
+**默认路径：写 spec，让生成器出帧。** 每帧一段 ~15 行的 JSON
+（卡名 / cfg 文案 / 时长 / seed / 缝 / 字幕），批量生成：
 
-卡的代码是唯一真源。每张卡都已经：
-- 走安全区比例，三种画幅自动适配
-- 文字强制入框（`S.boxText`）
-- 过了三道审计
+```bash
+node scripts/make-frame.mjs film-spec.json --dir <片目录>
+```
 
-建帧红线：
+生成器从 `assets/hw-cards.js` 现场提取卡体（不会与卡库漂移）；样板、四条引用红线、
+`#root`、stage id、字幕、缝、逐文本 `wordsOut` 出场全部自动就位；cfg 缺键、
+字幕超 14 字、key 落空、转场名不存在会当场报出来。spec 格式见脚本头部注释。
+
+**生成的帧是普通 HTML，随便手改** —— 补支撑层（版面三层的要求）、调节奏、加自定义
+元素，都直接编辑输出文件。需要多卡拼合或全自定义画面时，才从
+`templates/frame-boilerplate.html` 手写整帧。
+
+手写或手改时，卡的代码是唯一真源（打开 `assets/hw-cards.js` 搜卡名抄 `build`），
+且这些红线一条不能破：
 
 - **hw-kit.js / rough.js / gsap 的 `<script>` 必须引在 `<template>` 内**——引在外面永远不执行，且不报错
 - **`HW.stage` 必须收本帧的合成 id**：`HW.stage("#root", { w, h, id: "03-visualize" })`，
@@ -93,7 +111,7 @@ HW.auditMotion(S, tl)  // 扫全时间线，抓动画途中才越界的
 ```bash
 node scripts/portability-lint.mjs <片目录>   # 跨平台（合成之后才发作的那一类）
 npm run check                         # 渲染错误 + 对比度 —— 连 Runtime 段一起看
-node scripts/scene-lint.mjs  <片目录>   # 选卡纪律（查 STORYBOARD，看不见画面）
+node scripts/scene-lint.mjs  <片目录>   # 选卡纪律复核（第 2 步已跑过一遍，这里保底）
 node scripts/motion-lint.mjs <片目录>   # 动效尺度
 node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面审计（随包在 tools/）
 ```
@@ -254,6 +272,7 @@ X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 | 你正要做的事 | 读这个 |
 |---|---|
 | 选卡（第 2 步） | `references/scenes-index.md` — 按形状查卡名 |
+| 建帧（第 3 步） | `scripts/make-frame.mjs` 头部注释 — spec 格式 |
 | 抄某张卡的实现 | `assets/hw-cards.js` — **卡的代码是唯一真源** |
 | 算版面 / 画幅 / 槽位 | `references/layout.md` |
 | 配色、对比度、字体子集化 | `references/palette.md` |

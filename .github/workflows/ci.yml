@@ -33,6 +33,11 @@ jobs:
           CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
         run: node tools/ci-check.mjs
 
+      - name: 帧生成器能提取全部 64 张卡
+        # make-frame 靠花括号配平从 hw-cards.js 提取卡体 —— 卡库写法一变
+        # （比如注释里一个英文撇号）就可能静默坏掉。穷举全部卡，抽样测不出这类事。
+        run: node scripts/make-frame.mjs --selftest
+
       - name: 出问题时留下 playground 以便复现
         if: failure()
         uses: actions/upload-artifact@v4
