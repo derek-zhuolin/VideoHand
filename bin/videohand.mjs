@@ -190,6 +190,108 @@ function run(script, args = []) {
   }
 }
 
+/* ── sync：把本机所有副本和 GitHub 拉到同一个 commit 上 ─────────────
+ *
+ * 场景是双向的：
+ *   · 你在某份副本里 commit 了 → 推上 GitHub，其余副本拉平
+ *   · GitHub 上有新东西（别的机器推的）→ 本机每份副本拉平
+ *
+ * 三条铁律：
+ *   · 只走 fast-forward。分叉了不猜不合，报出来让人决定 —— 自动 merge
+ *     出错的代价是「渲一支片才看得见」，不值得省这一下。
+ *   · 有未提交改动的副本不动，只提醒。那可能是干到一半的活。
+ *   · npx 装的带戳副本没有 git，重装即同步（提示命令，不代跑 ——
+ *     它可能正被某个渲染进程读着）。
+ */
+function git(dir, ...a) {
+  return execFileSync("git", ["-C", dir, ...a], { encoding: "utf8" }).trim();
+}
+
+function sync() {
+  head(`videohand sync`);
+  const copies = [];
+  for (const [rel, label] of CANDIDATES) {
+    const dir = join(homedir(), rel, NAME);
+    if (existsSync(dir)) copies.push({ dir, label });
+  }
+  if (!copies.length) { say("本机没有任何副本 —— 先装：npx videohand"); return 1; }
+
+  let pushed = 0, pulled = 0, clean = 0, attention = 0;
+  for (const { dir, label } of copies) {
+    if (!existsSync(join(dir, ".git"))) {
+      const stamped = existsSync(join(dir, ".videohand-install.json"));
+      say(`ℹ ${label} — ${stamped ? "npx 装的副本，重装即同步：npx videohand@latest install" : "裸拷贝，没法同步（见 doctor）"}`);
+      attention++;
+      continue;
+    }
+    try {
+      if (git(dir, "status", "--porcelain") !== "") {
+        say(`⚠ ${label} — 有未提交改动，没动它（先 commit 或 stash，再重跑 sync）`);
+        attention++;
+        continue;
+      }
+      git(dir, "fetch", "origin");
+      const [behind, ahead] = git(dir, "rev-list", "--left-right", "--count", "origin/main...HEAD")
+        .split(/\s+/).map(Number);
+      if (ahead > 0 && behind > 0) {
+        say(`⚠ ${label} — 和 GitHub 各自领先（本地 +${ahead} / 远端 +${behind}），分叉了`);
+        say(`  自动合有风险，你自己看：git -C "${dir}" log --oneline origin/main...HEAD`);
+        attention++;
+      } else if (ahead > 0) {
+        git(dir, "push", "origin", "HEAD:main");
+        say(`↑ ${label} — 推了 ${ahead} 个 commit 上 GitHub`);
+        pushed++;
+      } else if (behind > 0) {
+        git(dir, "pull", "--ff-only");
+        say(`↓ ${label} — 拉平了 ${behind} 个 commit（现在 ${git(dir, "log", "--oneline", "-1").slice(0, 40)}）`);
+        pulled++;
+      } else {
+        say(`◇ ${label} — 已同步（${git(dir, "log", "--oneline", "-1").slice(0, 40)}）`);
+        clean++;
+      }
+    } catch (e) {
+      say(`✗ ${label} — ${String(e.message).split("\n")[0].slice(0, 80)}（网络？权限？）`);
+      attention++;
+    }
+  }
+
+  /* 有人先推了、有人后拉 —— 推完再把其余副本过一遍，一次 sync 全对齐 */
+  if (pushed > 0) {
+    for (const { dir, label } of copies) {
+      if (!existsSync(join(dir, ".git"))) continue;
+      try {
+        if (git(dir, "status", "--porcelain") !== "") continue;
+        git(dir, "fetch", "origin");
+        const behind = Number(git(dir, "rev-list", "--count", "HEAD..origin/main"));
+        if (behind > 0) { git(dir, "pull", "--ff-only"); say(`↓ ${label} — 补拉了刚推上去的 ${behind} 个 commit`); pulled++; }
+      } catch {}
+    }
+  }
+
+  head("完成");
+  say(`推 ${pushed} / 拉 ${pulled} / 已同步 ${clean}${attention ? ` / 要你看一眼 ${attention}` : ""}`);
+  return attention > 0 ? 1 : 0;
+}
+
+/* ── sync --install-hook：commit 完自动 sync，从此不用记得跑 ─────────
+ * git 的 hook 不随 clone 走（安全设计），所以要装一次。
+ * post-commit 里跑 sync；推不上去（断网）也不拦 commit —— hook 永远退出 0。 */
+function installHook() {
+  let n = 0;
+  for (const [rel, label] of CANDIDATES) {
+    const dir = join(homedir(), rel, NAME);
+    if (!existsSync(join(dir, ".git", "hooks"))) continue;
+    const hook = join(dir, ".git", "hooks", "post-commit");
+    writeFileSync(hook,
+      `#!/bin/sh\n# videohand: commit 完自动同步 GitHub 和本机其余副本（断网失败不拦 commit）\nnode "${join(dir, "bin", "videohand.mjs")}" sync || true\n`);
+    execFileSync("chmod", ["+x", hook]);
+    say(`＋ ${label} — post-commit hook 已装（${hook}）`);
+    n++;
+  }
+  say(n ? `\n从此在任何一份副本里 commit，会自动推 GitHub 并拉平其余副本。` : "没找到可装 hook 的 git 副本");
+  return n ? 0 : 1;
+}
+
 const [cmd = "install"] = process.argv.slice(2);
 let code = 0;
 
@@ -204,6 +306,8 @@ videohand ${PKG.version} — 把一段文字做成手绘风格的小视频
   npx videohand              装进本机所有 agent 的 skill 目录
   npx videohand doctor       自检：缺什么、坏在哪、怎么修
   npx videohand playground   生成 64 张卡的动图墙
+  npx videohand sync         本机所有副本 ⇄ GitHub 拉到同一个 commit
+  npx videohand sync --install-hook   commit 完自动 sync（装一次就行）
   npx videohand --version
 
 需要：Node >=22、ffmpeg（只在渲染那步）。HyperFrames 会自动拉，不用预装。
@@ -211,6 +315,9 @@ videohand ${PKG.version} — 把一段文字做成手绘风格的小视频
     break;
   case "doctor":
     code = run("tools/doctor.mjs");
+    break;
+  case "sync":
+    code = process.argv.includes("--install-hook") ? installHook() : sync();
     break;
   case "playground":
     code = run("scripts/build-gallery.mjs");
