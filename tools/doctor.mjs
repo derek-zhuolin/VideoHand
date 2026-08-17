@@ -110,7 +110,7 @@ if (existsSync(pg)) {
   );
 
 /* ── 6 · 全机副本盘点 ─────────────────────────────────────
-   这一节是一次真实事故换来的。本机同时存在两份 handdrawn：
+   这一节是一次真实事故换来的。本机同时存在两份 videohand：
    `~/.claude/skills/` 那份是仓库（已修好），`~/.workbuddy/skills/` 那份是**实体拷贝**，
    还带着坏掉的引擎。两份长得一模一样 —— 目录结构、文件名、甚至大部分内容都相同，
    **唯一的差别要渲一支片出来才看得见**。
@@ -144,7 +144,7 @@ const myVer =
 
 const copies = [];
 for (const [rel, label] of roots) {
-  const dir = join(home, rel, "handdrawn");
+  const dir = join(home, rel, "videohand");
   if (!existsSync(dir)) continue;
   const isRepo = existsSync(join(dir, ".git"));
   const head = isRepo
@@ -165,7 +165,7 @@ if (!copies.length) {
     "装的位置",
     `当前在 ${SKILL} —— 不在任何一个 agent 的 skill 目录下，agent 找不到它`,
     "把仓库直接 clone 进去（别复制、别软链，理由见 README）：\n" +
-      "      git clone <repo> ~/.claude/skills/handdrawn"
+      "      git clone <repo> ~/.claude/skills/videohand"
   );
 } else {
   /* `?` 是"读不出版本"，**不是"没问题"**。早一版把它跟一致的归成一类，
@@ -198,7 +198,7 @@ if (!copies.length) {
 
 /* ── 输出 ─────────────────────────────────────────────── */
 const mark = { ok: "◇", warn: "ℹ", bad: "✗" };
-console.log("◆ handdrawn 装机自检\n");
+console.log("◆ videohand 装机自检\n");
 for (const r of rows) {
   console.log(`  ${mark[r.level]} ${r.name.padEnd(12)} ${r.detail}`);
   if (r.fix) console.log(`      修：${r.fix}`);

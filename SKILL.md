@@ -1,9 +1,9 @@
 ---
-name: handdrawn
+name: videohand
 description: 把一段文字做成纸面马克笔手绘风格的小视频。逐句按语义选画面卡（64 张可选，相邻不重样），rough.js 笔画原语建帧，安全区 + 三画幅自适应，可选配音与词级手绘字幕。当用户要做手绘 / 涂鸦 / 白板风格的解说短片、观点片、上新片时用它。
 ---
 
-# handdrawn
+# videohand
 
 给一段文字，出一支手绘风格的小视频。
 
@@ -258,7 +258,7 @@ X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 ## 目录
 
 ```
-handdrawn/
+videohand/
 ├── SKILL.md                    # 你在读的这个
 ├── assets/
 │   ├── hw-kit.js               # 引擎：笔画原语 + 槽位 + 编排器 + 审计 + 字幕

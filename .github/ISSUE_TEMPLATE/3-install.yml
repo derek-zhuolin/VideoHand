@@ -21,7 +21,7 @@ body:
     attributes:
       label: 你把仓库 clone 到了哪个路径
       description: 完整路径。
-      placeholder: 例：~/.claude/skills/handdrawn
+      placeholder: 例：~/.claude/skills/videohand
     validations:
       required: true
 

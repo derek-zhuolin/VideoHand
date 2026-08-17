@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh — 一条命令把 handdrawn 装进你的 agent
+# install.sh — 一条命令把 videohand 装进你的 agent
 #
 #   curl -fsSL https://raw.githubusercontent.com/derek-zhuolin/VideoHand/main/tools/install.sh | bash
 #
@@ -25,13 +25,13 @@
 
 set -euo pipefail
 
-REPO="${HANDDRAWN_REPO:-https://github.com/derek-zhuolin/VideoHand.git}"
-NAME="handdrawn"
+REPO="${VIDEOHAND_REPO:-https://github.com/derek-zhuolin/VideoHand.git}"
+NAME="videohand"
 
 say()  { printf '  %s\n' "$*"; }
 head_() { printf '\n◆ %s\n' "$*"; }
 
-head_ "handdrawn 安装"
+head_ "videohand 安装"
 
 # ── 0 · 先决条件 ──────────────────────────────────────────
 missing=()

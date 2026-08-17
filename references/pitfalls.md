@@ -258,20 +258,20 @@ playground 里的 Xiaolai 子集是 GB2312 常用 6796 字。**成片要按自�
 
 `gate.mjs` 调的是 `motion-quality/scripts/motion-lint.mjs`。那个脚本**只从
 `tools/`（文件名要匹配 `build-frames|frames?.`）和 `src/` 里找 `.mjs/.js/.ts/.tsx`**。
-handdrawn 的帧是 `compositions/frames/*.html` —— 它一条都读不到，于是打印
+videohand 的帧是 `compositions/frames/*.html` —— 它一条都读不到，于是打印
 「blur 0 处 / 缝 0 条」，然后 `exit 0`。
 
 判据①②实际是**零样本**，闸照样打勾。实测：闸连报两次「motion-lint 退出码 0」，
-而 handdrawn 自带的 motion-lint 在同一批帧里抓出两处 30ms / 40ms 的错峰。
+而 videohand 自带的 motion-lint 在同一批帧里抓出两处 30ms / 40ms 的错峰。
 
 **零样本不等于通过。** 一个闸如果可能因为「没找到东西可查」而返回 0，
 它就必须把样本数打出来，让人能看见「查了 0 条」。
 
-→ `gate.mjs` 现在同时跑 handdrawn 自带的 `scene-lint` / `motion-lint`
+→ `gate.mjs` 现在同时跑 videohand 自带的 `scene-lint` / `motion-lint`
    （它们直接读 `STORYBOARD.md` 和 `compositions/frames/*.html`）。
    通用那个留着，但它不再是唯一的动效闸。
 
-→ 连带的第二个盲点：handdrawn 的 motion-lint 用正则 `(?:stagger|step):\s*([\d.]+)`
+→ 连带的第二个盲点：videohand 的 motion-lint 用正则 `(?:stagger|step):\s*([\d.]+)`
    抓错峰值，**只认字面量**。写成 `step: L.cmd ? 0.030 : 0.012` 它看不见。
    算出来的值不等于查过了 —— 该写注释说清楚为什么这个值是对的。
 
@@ -373,7 +373,7 @@ HW.frame(tl, S, DUR);        // 收 stage，不收选择器
 
 ### 40. 同一个 skill 在本机有两份，其中一份带着已经修好的 bug
 
-`~/.claude/skills/handdrawn` 是仓库（已修好），`~/.workbuddy/skills/handdrawn` 是**实体拷贝**，
+`~/.claude/skills/videohand` 是仓库（已修好），`~/.workbuddy/skills/videohand` 是**实体拷贝**，
 还是坏的那一版。目录结构、文件名、大部分内容一模一样，
 **唯一的差别要渲一支片出来才看得见**。
 

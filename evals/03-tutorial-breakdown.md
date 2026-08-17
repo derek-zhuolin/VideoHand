@@ -2,7 +2,7 @@
 
 ```json
 {
-  "skills": ["handdrawn"],
+  "skills": ["videohand"],
   "query": "Make a silent hand-drawn video explaining how a request travels through a reverse proxy: client sends a request, proxy terminates TLS and picks a backend, backend responds, proxy caches it. Include the cache hit rate from ./stats.json. No voiceover.",
   "files": ["stats.json"],
   "expected_behavior": [

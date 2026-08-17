@@ -62,7 +62,7 @@ const frames = walk(join(projectDir, "compositions"));
 const indexHtml = join(projectDir, "index.html");
 
 if (!frames.length) {
-  console.error(`✗ ${relative(process.cwd(), projectDir)}/compositions 下没有 html —— 这不像一个 handdrawn 片目录`);
+  console.error(`✗ ${relative(process.cwd(), projectDir)}/compositions 下没有 html —— 这不像一个 videohand 片目录`);
   process.exit(1);
 }
 

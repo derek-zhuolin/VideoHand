@@ -2,7 +2,7 @@
 
 ```json
 {
-  "skills": ["handdrawn"],
+  "skills": ["videohand"],
   "query": "Make a hand-drawn video from this argument: everyone treats documentation as something you write after the code, but documentation is the design step — if you cannot write it, the design is not finished. Most teams skip it and pay for it in review. Start writing it first.",
   "files": [],
   "expected_behavior": [

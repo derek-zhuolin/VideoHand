@@ -1,7 +1,7 @@
 # 渲染前的闸 —— 做视频 skill 的通用方法
 
 这份文档是从一支片的四轮迭代里榨出来的（v1→v4，累计烧掉约两小时）。
-它不绑定 handdrawn，**任何一条出片线都能照搬**。
+它不绑定 videohand，**任何一条出片线都能照搬**。
 
 ---
 
@@ -119,7 +119,7 @@ node tools/gate.mjs . --stage 2 --spans 4.5,8.7,6.8,6.9,9.3,8.0,8.0 --captions 1
    skill 是一堆 markdown + 纯 node 脚本 + 浏览器里跑的 JS，本来就跟哪家模型无关 ——
    实测同一份 SKILL.md 用 `deepseek-v4-flash` 跑，四道闸和字幕契约都能准确复述。
    **真正会漏的是安装**：这台机器上 skill 的真身在 `~/.agents/skills/`，
-   CodeBuddy 从 `~/.codebuddy/skills/` 软链过去，而 handdrawn 当初只挂进了
+   CodeBuddy 从 `~/.codebuddy/skills/` 软链过去，而 videohand 当初只挂进了
    `~/.claude/skills/` —— 换执行器一跑，agent 压根找不到这个 skill，
    于是自己瞎编画风（v1 就是这么翻的车，用了 PingFang + feTurbulence 冒充手绘）。
    新 skill 落地后，**三个目录各挂一次并逐个 `md5` 验一遍**读到的是不是同一份。

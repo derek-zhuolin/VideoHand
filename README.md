@@ -1,4 +1,4 @@
-# handdrawn
+# videohand
 
 **给一段文字，出一支像是随手画在纸上的小视频。**
 
@@ -84,10 +84,10 @@ Gemini），往每个已经存在的 skill 目录里 clone 一份，生成 64 �
 不想执行来路不明的脚本（合理），就手动：
 
 ```bash
-git clone https://github.com/derek-zhuolin/VideoHand.git ~/.claude/skills/handdrawn
-node ~/.claude/skills/handdrawn/tools/doctor.mjs        # 自检
-node ~/.claude/skills/handdrawn/scripts/build-gallery.mjs && \
-  open ~/.claude/skills/handdrawn/playground/index.html  # 看看能画什么
+git clone https://github.com/derek-zhuolin/VideoHand.git ~/.claude/skills/videohand
+node ~/.claude/skills/videohand/tools/doctor.mjs        # 自检
+node ~/.claude/skills/videohand/scripts/build-gallery.mjs && \
+  open ~/.claude/skills/videohand/playground/index.html  # 看看能画什么
 ```
 
 ### 装不上的时候
@@ -117,12 +117,12 @@ agent 在用哪份。这个坑踩过不止一次：某个 skill 目录里躺着�
 clone 的好处是**每一份都能 `git log` 自证版本**，一眼就知道谁老了。要拉齐：
 
 ```bash
-git -C ~/.claude/skills/handdrawn pull
+git -C ~/.claude/skills/videohand pull
 ```
 
 ### 漂移这件事，别指望自己发现
 
-"坏了就删"防不住 —— **因为你看不出它坏了**。实测过一次：本机同时有两份 handdrawn，
+"坏了就删"防不住 —— **因为你看不出它坏了**。实测过一次：本机同时有两份 videohand，
 目录结构、文件名、大部分内容都一模一样，只有一份带着已经修好的 bug。
 差别要**渲一支片出来**才看得见。
 
@@ -268,7 +268,7 @@ node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面�
 ## 目录
 
 ```
-handdrawn/
+videohand/
 ├── SKILL.md                    # agent 读这个
 ├── README.md                   # 你在读的这个
 ├── assets/

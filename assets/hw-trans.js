@@ -7,7 +7,7 @@
  *     X.TI["paper-slide"](SEED_SEAM);          // 这一格开头：把上一格的盖子揭开
  *     X.T ["ink-blot"](DUR - 0.40, SEED_SEAM); // 这一格结尾：给下一格盖上
  *
- * 硬约束（每条都对应一次翻车，见 handdrawn/references/transitions.md）：
+ * 硬约束（每条都对应一次翻车，见 videohand/references/transitions.md）：
  *   · 一条缝是两半，两半必须同一个 SEED，否则不是「同一片涂鸦被揭开」而是换了一片
  *   · 缝里任意时刻画面上都得有东西 —— 纯白纯黑都判空帧
  *   · 盖住画面的块不许 100% 覆盖（>60% 判闷棍），所以墨点走排线不走实心

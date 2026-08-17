@@ -126,7 +126,7 @@ execFileSync(process.execPath, [join(ROOT, "scripts", "build-gallery.mjs")], { s
 const built = readFileSync(join(ROOT, "playground", "index.html"), "utf8");
 const at = built.indexOf(">", built.indexOf("<body")) + 1;
 const page = built.slice(0, at) + "<script>" + PROBE + "</script>" + built.slice(at);
-const dir = mkdtempSync(join(tmpdir(), "handdrawn-ci-"));
+const dir = mkdtempSync(join(tmpdir(), "videohand-ci-"));
 const file = join(dir, "ci.html");
 writeFileSync(file, page);
 
