@@ -135,9 +135,12 @@ ffmpeg -i renders/video-1.2x.mp4 -vn -acodec pcm_s16le /tmp/x.wav
 ffmpeg -i /tmp/x.wav -af volumedetect -f null -   # mean ≈ -24dB、max ≈ -1dB 为正常人声
 
 # ② 画面在动：抽三帧 md5 不同（每条单独执行！同命令多 -ss 只出第一帧）
-ffmpeg -ss 1 -i renders/video-1.2x.mp4 -frames:v 1 /tmp/a.jpg
-ffmpeg -ss 12 -i renders/video-1.2x.mp4 -frames:v 1 /tmp/b.jpg
-ffmpeg -ss 23 -i renders/video-1.2x.mp4 -frames:v 1 /tmp/c.jpg
+#    -y 是必须的，且输出别用 /tmp 里的老名字：ffmpeg 遇到已存在的文件会**交互式**
+#    问 Overwrite? 然后放弃写入 —— 你拿到的是上一次留在那儿的旧文件的 md5，
+#    三个哈希照样不一样，于是这一步「过了」，其实什么都没验。同 #30 那一族的病。
+ffmpeg -y -ss 1 -i renders/video-1.2x.mp4 -frames:v 1 "$SCRATCH/f1.jpg"
+ffmpeg -y -ss 12 -i renders/video-1.2x.mp4 -frames:v 1 "$SCRATCH/f2.jpg"
+ffmpeg -y -ss 23 -i renders/video-1.2x.mp4 -frames:v 1 "$SCRATCH/f3.jpg"
 
 # ③ 说的对：whisper 抽听开头（小模型会听岔英文，属正常；听的是"是本人声音、内容大意对"）
 ```
