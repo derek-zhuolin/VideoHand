@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - uses: browser-actions/setup-chrome@v1
         id: chrome
@@ -61,7 +61,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"   # package.json 声明的下限，就按下限测
+          node-version: "22"   # package.json 声明的下限，就按下限测
 
       - name: 装 ffmpeg（渲染那步要，doctor 会查）
         run: |

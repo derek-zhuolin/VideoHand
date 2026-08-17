@@ -80,7 +80,11 @@ Excalidraw 自己那套手绘渲染引擎，字体也沿用 Excalidraw 的官方
 npx videohand
 ```
 
-完事。**你需要预先装好的东西只有一样：[Node](https://nodejs.org) ≥ 20。**
+完事。**你需要预先装好的东西只有一样：[Node](https://nodejs.org) ≥ 22。**
+
+> 为什么是 22：渲染引擎 HyperFrames 自己声明了 `engines.node >=22`。Node 20 上
+> 这个 skill 装得上、自检也几乎全绿，但**一渲染就废** —— npx 会因为那条约束直接
+> 拒装引擎，而报错长得像网络问题。所以下限跟着它走，宁可装之前就拦住你。
 
 其余的别担心：
 

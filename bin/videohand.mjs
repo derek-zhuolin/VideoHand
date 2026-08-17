@@ -206,7 +206,7 @@ videohand ${PKG.version} — 把一段文字做成手绘风格的小视频
   npx videohand playground   生成 64 张卡的动图墙
   npx videohand --version
 
-需要：Node >=20、ffmpeg（只在渲染那步）。HyperFrames 会自动拉，不用预装。
+需要：Node >=22、ffmpeg（只在渲染那步）。HyperFrames 会自动拉，不用预装。
 `);
     break;
   case "doctor":

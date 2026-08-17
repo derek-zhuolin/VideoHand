@@ -26,7 +26,7 @@
     "videohand": "./bin/videohand.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "files": [
     "bin/",

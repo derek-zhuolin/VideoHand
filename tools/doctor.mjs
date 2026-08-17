@@ -33,11 +33,11 @@ const sh = (cmd) => {
 
 /* ── 1 · Node ─────────────────────────────────────────── */
 const nodeMajor = Number(process.versions.node.split(".")[0]);
-if (nodeMajor >= 20) ok("Node", `v${process.versions.node}`);
+if (nodeMajor >= 22) ok("Node", `v${process.versions.node}`);
 else
   bad(
     "Node",
-    `v${process.versions.node} 太老（要 ≥ 20）`,
+    `v${process.versions.node} 太老（要 ≥ 22 —— hyperframes 自己要求的）`,
     "brew install node   # 或去 nodejs.org 下 LTS"
   );
 
@@ -90,11 +90,20 @@ if (existsSync(cjk)) {
 const hf = sh("npx --yes hyperframes@0.7.106 --version");
 if (hf) ok("hyperframes", hf.split("\n").pop().slice(0, 40));
 else
+  /* 头号嫌疑不是网络，是 Node 版本 —— hyperframes 自己声明 engines.node >=22，
+     npx 会因为这条约束直接拒装。而 videohand 本身在 Node 20 上装得好好的，
+     于是现象是「装完了，一渲染就废」，人很容易一头扎进网络问题里查半天。
+     这条是 CI 在全新 runner 上抓出来的：开发机常年 Node 24，永远撞不到。 */
   bad(
     "hyperframes",
-    "npx 拉不到（多半是网络，或者 npm registry 不通）",
-    "先试镜像：npm config set registry https://registry.npmmirror.com\n" +
-      "      再跑：npx --yes hyperframes@0.7.106 --version"
+    `npx 拉不到（你在 Node v${process.versions.node}）`,
+    (nodeMajor < 22
+      ? `**先看 Node**：hyperframes 要求 >=22，你是 v${process.versions.node}，npx 会直接拒装。\n` +
+        "      brew install node   # 或去 nodejs.org 下 LTS\n" +
+        "      升完再说网络：\n"
+      : "多半是网络或 registry 不通：\n") +
+      "      npm config set registry https://registry.npmmirror.com\n" +
+      "      npx --yes hyperframes@0.7.106 --version"
   );
 
 /* ── 5 · playground 建得起来吗 ────────────────────────── */
