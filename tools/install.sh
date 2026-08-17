@@ -27,6 +27,7 @@ set -euo pipefail
 
 REPO="${VIDEOHAND_REPO:-https://github.com/derek-zhuolin/VideoHand.git}"
 NAME="videohand"
+LEGACY_NAME="handdrawn"   # 改名前的旧目录名，见下面的迁移分支
 
 say()  { printf '  %s\n' "$*"; }
 head_() { printf '\n◆ %s\n' "$*"; }
@@ -72,10 +73,39 @@ fi
 
 head_ "装到 ${#targets[@]} 处"
 
-installed=0; skipped=0; updated=0
+installed=0; skipped=0; updated=0; legacy=0
 for entry in "${targets[@]}"; do
   dir="${entry%%:*}"; label="${entry##*:}"
   dest="$dir/$NAME"
+  old="$dir/$LEGACY_NAME"
+
+  # ── 旧名迁移 ────────────────────────────────────────────
+  # 这个 skill 以前叫 handdrawn。不处理的话老用户重跑安装会装出**第二份**，
+  # 而旧的 handdrawn/ 还赖在原地 —— 于是同一台机器上两份不同版本的引擎并存，
+  # agent 认哪份取决于它先扫到谁。这正是 doctor 那节"副本盘点"要防的事故，
+  # 只不过这次是安装脚本自己制造的。所以：装之前先把旧的处理掉。
+  #
+  # 干净的仓库才自动搬（git mv 语义上就是同一份东西换个名字，无损）。
+  # 有未提交改动的一律不碰 —— 那可能是他自己调的参数。
+  if [ -d "$old" ] && [ ! -e "$dest" ]; then
+    if [ -d "$old/.git" ] && [ -z "$(git -C "$old" status --porcelain 2>/dev/null)" ]; then
+      mv "$old" "$dest" \
+        && { say "⇄ $label — 旧名 $LEGACY_NAME/ 已改名为 $NAME/（干净仓库，无损搬迁）"; legacy=$((legacy+1)); } \
+        || say "  ✗ 改名失败（权限？）—— 手动跑：mv \"$old\" \"$dest\""
+    else
+      # ${old} 必须加花括号：后面紧跟的是全角逗号，bash 会把多字节字符的首字节
+      # 当成变量名的一部分，于是在 set -u 下炸成 "old?: unbound variable"。
+      # 这条分支恰恰是保护用户未提交改动的那条 —— 它一炸，安装直接中断。
+      say "⚠ $label — 发现旧名 ${old}，但它有未提交改动（或不是仓库），**没动它**"
+      say "  你自己决定：确认没用了就 rm -rf \"$old\"，想留就先 commit"
+      say "  在你处理之前，这台机器上会同时存在新旧两份，agent 可能认错"
+      legacy=$((legacy+1))
+    fi
+  elif [ -d "$old" ] && [ -e "$dest" ]; then
+    say "⚠ $label — 新旧两份并存（$LEGACY_NAME/ 和 $NAME/）"
+    say "  新的已就位；旧的确认没用了就 rm -rf \"$old\""
+    legacy=$((legacy+1))
+  fi
 
   if [ -d "$dest/.git" ]; then
     say "↻ $label — 已经是仓库，拉一下"
@@ -116,6 +146,7 @@ fi
 
 head_ "完成"
 say "新装 $installed 处 / 更新 $updated 处 / 跳过 $skipped 处"
+[ "$legacy" -gt 0 ] && say "旧名 handdrawn 处理 $legacy 处（见上面每条的说明）"
 if [ -n "$MAIN" ]; then
   say ""
   say "先逛一圈能画什么："
