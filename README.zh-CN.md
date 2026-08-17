@@ -18,10 +18,11 @@
 
 ## 演示
 
-![64 张画面卡同墙循环播](docs/assets/wall.gif)
+![64 张画面卡里精选的 16 张](docs/assets/wall.gif)
 
-不用装任何东西，**[在线 64 格墙](https://derek-zhuolin.github.io/VideoHand/)** 直接逛 ——
-全部画面卡同时循环播，顶部可切 9:16 / 16:9 / 1:1 和中英文，四个滑杆实时调笔触。
+↑ 这是 64 张里的 16 张。全部 64 张去**[在线 64 格墙](https://derek-zhuolin.github.io/VideoHand/)**
+直接逛，不用装任何东西 —— 同时循环播，顶部可切 9:16 / 16:9 / 1:1 和中英文，
+四个滑杆实时调笔触。
 
 装完本地也有同一面墙：`npx github:derek-zhuolin/VideoHand playground`。
 

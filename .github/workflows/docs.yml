@@ -1,0 +1,59 @@
+name: Docs 重渲
+
+# docs/ 的产物（在线墙 + 每卡静帧 + wall.gif）是入库的，Pages 直接从 main /docs
+# 分支目录部署 —— 所以日常 push 什么都不用渲，30 秒内就上线。
+#
+# 只有画面真的会变的改动（卡库 / 引擎 / 转场 / shell / 发射脚本本身）才值得
+# 重截 64 张卡 + 24 帧精选墙 —— 本地实测一整轮要几十分钟，不能挂在每次 push 上。
+# 想手动重渲就 workflow_dispatch。
+#
+# 防死循环：bot 的提交只碰 docs/，不在下面的 paths 里，不会再触发自己。
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "assets/hw-cards.js"
+      - "assets/hw-kit.js"
+      - "assets/hw-trans.js"
+      - "assets/fonts/**"
+      - "playground/shell.html"
+      - "scripts/build-gallery.mjs"
+      - "scripts/emit-docs.mjs"
+
+jobs:
+  emit:
+    name: 重截全部卡帧并合成
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+        with:
+          chrome-version: stable
+
+      - name: 装 ffmpeg（合 wall.gif 要）
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: 重建 playground 并发射 docs/
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: node scripts/build-gallery.mjs --emit docs
+
+      - name: 产物有变化才提交
+        # emit-docs 内容不变就不写盘，所以多数触发在这里安静收场。
+        run: |
+          git add docs/
+          if git diff --cached --quiet; then echo "docs/ 没变，不提交"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: 重渲 docs/ 产物（docs workflow 自动提交）"
+          git push

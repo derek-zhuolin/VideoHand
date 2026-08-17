@@ -6,12 +6,12 @@
 npx github:derek-zhuolin/VideoHand
 ```
 
-![All 64 hand-drawn cards looping on one wall](docs/assets/wall.gif)
+![16 of the 64 hand-drawn cards looping](docs/assets/wall.gif)
 
-**[▶ Browse the live playground](https://derek-zhuolin.github.io/VideoHand/)** — nothing to install.
-All 64 cards loop side by side; switch 9:16 / 16:9 / 1:1 and English / Chinese, and dial the
-stroke feel with four sliders. Every cell runs that card's **real code**, so the wall doubles
-as a smoke test: a broken card shows up red.
+*↑ 16 of the 64 cards.* **[▶ See all 64 on the live wall](https://derek-zhuolin.github.io/VideoHand/)** —
+nothing to install. Switch 9:16 / 16:9 / 1:1 and English / Chinese, and dial the stroke feel
+with four sliders. Every cell runs that card's **real code**, so the wall doubles as a smoke
+test: a broken card shows up red.
 
 [![CI](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml/badge.svg)](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/videohand.svg)](https://www.npmjs.com/package/videohand)

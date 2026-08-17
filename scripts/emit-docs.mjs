@@ -5,7 +5,11 @@
  * 产出三样，全部入库：
  *   docs/index.html               自包含 64 格墙（与 playground/index.html 同源）
  *   docs/assets/cards/<name>.png  每卡一张 480×480 静帧（9:16 定格）
- *   docs/assets/wall.gif          整墙 3s 动图（16:9 缩略，≤4MB 硬闸）
+ *   docs/assets/wall.gif          16 张精选卡 3s 动图（4×4 / 16:9，≤4MB 硬闸）
+ *
+ * wall.gif 为什么只放 16 张：README 首屏那张图宽 720px，64 格摊开每格只剩 84px，
+ * GIF 的 128 色调色板再一压就是一片糊。16 格每格 176px，笔画看得清；
+ * 全部 64 张的动图墙由在线 playground 承担，README 在图下挂链接。
  *
  * 零 npm 依赖 —— 跟 ci-check 一样只要机器上有 Chrome；合 gif 用 ffmpeg（doctor 已查它）。
  * 入口是 `node scripts/build-gallery.mjs --emit docs`，它先重建 playground 再调这里。
@@ -31,6 +35,14 @@ const GIF_LIMIT = 4 * 1024 * 1024; // 仓库别肿：wall.gif 的硬闸
 const GIF_SECONDS = 3;
 const GIF_FPS = 8;
 const CARD_FREEZE_T = 4.2; // 定格在入场都完成、出场还没开始的位置（对短卡自动钳到 duration）
+
+/* wall.gif 的 16 张精选：九个族尽量都露脸，挑动作辨识度高的。改这份名单就改这里。 */
+const WALL_CARDS = [
+  "title-sweep-underline", "cross-out-correct", "big-number-annotate", "one-word-explode",
+  "list-rows", "checkbox-tick-list", "pipeline-arrow-flow", "loop-cycle-arrows",
+  "venn-overlap", "scale-balance", "matrix-quadrant", "bar-hand-draw",
+  "line-trend-draw", "gauge-dial-swing", "lightbulb-spark", "sign-off",
+];
 
 /* ── Chrome / ffmpeg ───────────────────────────────────────────── */
 
@@ -81,11 +93,19 @@ const PROBE = `<script>
   } else if (mode === "wall") {
     ASPECT = "16:9";
     var T = parseFloat(q.get("t") || "0");
-    /* 红色诊断框只属于开发视图：这里出的是宣传缩略图，两张卡在 16:9 的既有
-       安全区告警（card-stack-deal / screen-frame）由 playground 继续红着提醒，
-       不该在 README 首屏把整面墙衬成"坏了"。 */
+    var want = (q.get("cards") || "").split(",").filter(Boolean);
+    if (want.length) {
+      var keep = [];
+      for (var w = 0; w < want.length; w++)
+        for (var c = 0; c < CARDS.length; c++)
+          if (CARDS[c].name === want[w]) { keep.push(CARDS[c]); break; }
+      CARDS.splice.apply(CARDS, [0, CARDS.length].concat(keep));
+    }
+    var cols = want.length ? Math.ceil(Math.sqrt(want.length)) : 8;
+    /* 红色诊断框只属于开发视图：这里出的是宣传缩略图，16:9 下的既有安全区告警
+       由 playground 继续红着提醒，不该在 README 首屏把墙衬成"坏了"。 */
     css.textContent = "body{padding:4px} header,.panel,.meta,.fail{display:none}" +
-      ".grid{grid-template-columns:repeat(8,1fr);gap:8px;max-width:none}" +
+      ".grid{grid-template-columns:repeat(" + cols + ",1fr);gap:8px;max-width:none}" +
       ".cell{border-radius:8px} .cell.err{border-color:rgba(0,62,31,.2)}";
     document.head.appendChild(css);
     startLoop = function () {
@@ -161,11 +181,17 @@ if (ONLY !== "wall") {
   ), 4);
 }
 
+const missing = WALL_CARDS.filter((n) => !names.includes(n));
+if (missing.length) {
+  console.error(`✗ WALL_CARDS 里有卡库不认识的名字：${missing.join(", ")} —— 精选名单跟卡库漂移了。`);
+  process.exit(1);
+}
 const FRAMES = GIF_SECONDS * GIF_FPS;
-console.log(`· 整墙帧 ×${FRAMES}（16:9 缩略，8×8）…`);
+console.log(`· 精选墙帧 ×${FRAMES}（16:9，4×4 共 ${WALL_CARDS.length} 张）…`);
+const wallQuery = "&cards=" + WALL_CARDS.join(",");
 await pool(Array.from({ length: FRAMES }, (_, f) => (profile) =>
-  shoot(`${pageUrl}?emit=wall&t=${(f / GIF_FPS).toFixed(3)}`,
-    join(framesDir, "wall-" + String(f).padStart(2, "0") + ".png"), 1280, 762, profile, 30000)
+  shoot(`${pageUrl}?emit=wall&t=${(f / GIF_FPS).toFixed(3)}${wallQuery}`,
+    join(framesDir, "wall-" + String(f).padStart(2, "0") + ".png"), 1280, 744, profile, 30000)
 ), 4);
 
 /* ── 合 gif：超 4MB 自动降档，降到底还超就报错不写盘 ───────────── */
@@ -179,7 +205,7 @@ function makeGif(outPath, w, colors) {
 }
 
 const gifTmp = join(work, "wall.gif");
-const LADDER = [[720, 128], [640, 96], [560, 64], [480, 48]];
+const LADDER = [[720, 192], [720, 128], [640, 96], [560, 64]];
 let gifSize = 0, rung = null;
 for (const [w, colors] of LADDER) {
   gifSize = makeGif(gifTmp, w, colors);
