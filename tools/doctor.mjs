@@ -117,7 +117,11 @@ if (existsSync(pg)) {
 
    所以"坏了就删"防不住：你根本不知道哪份是坏的。
    能防住的是**让每一份都必须能自证版本** —— git 仓库能 `git log`，实体拷贝不能。
-   于是规则变成一句可机检的话：**skill 目录里只允许有 git 仓库，不允许有实体拷贝。** */
+
+   注意规则的落点是**能不能自证版本**，不是"是不是 git"。git 只是当时唯一趁手的
+   实现手段。`npx videohand install` 装出来的是复制体，但它带一份
+   `.videohand-install.json`（版本 + 引擎 + 来源 + 时间）—— 一样能自证，所以一样算数。
+   真正判 ✗ 的只剩第三种：**既不是仓库、也没有戳的裸拷贝**，它张不了嘴。 */
 const home = process.env.HOME || "";
 const roots = [
   [".claude/skills", "Claude Code"],
@@ -150,6 +154,11 @@ for (const [rel, label] of roots) {
   const head = isRepo
     ? sh(`git -C "${dir}" log --oneline -1 2>/dev/null`) || "?"
     : null;
+  // npm 装的复制体带版本戳，同样能自证版本
+  let stamp = null;
+  try {
+    stamp = JSON.parse(readFileSync(join(dir, ".videohand-install.json"), "utf8"));
+  } catch {}
   let ver = "?";
   try {
     ver =
@@ -157,7 +166,7 @@ for (const [rel, label] of roots) {
         /HW\.VERSION\s*=\s*"([^"]+)"/
       ) || [])[1] || "?";
   } catch {}
-  copies.push({ label, dir, isRepo, head, ver });
+  copies.push({ label, dir, isRepo, head, ver, stamp });
 }
 
 if (!copies.length) {
@@ -173,25 +182,30 @@ if (!copies.length) {
      读不出来就当成不一致，宁可多提醒一次。 */
   const drift = copies.filter((c) => c.ver !== myVer);
   for (const c of copies) {
-    const tag = c.isRepo ? c.head.slice(0, 7) : "非仓库";
+    const tag = c.isRepo
+      ? c.head.slice(0, 7)
+      : c.stamp
+        ? `npm ${c.stamp.version}`
+        : "裸拷贝";
     const line = `${c.label.padEnd(12)} 引擎 ${c.ver.padEnd(7)} ${tag}`;
-    if (!c.isRepo)
+    if (!c.isRepo && !c.stamp)
       bad(
         "副本",
-        `${line}  ← 实体拷贝，说不出自己是哪个版本`,
-        `它可能带着一个已经修好的 bug，而你要渲一支片才看得见。换成仓库：\n` +
-          `      rm -rf "${c.dir}" && git clone <repo> "${c.dir}"`
+        `${line}  ← 既不是仓库、也没有版本戳，说不出自己是哪个版本`,
+        `它可能带着一个已经修好的 bug，而你要渲一支片才看得见。二选一：\n` +
+          `      npx videohand install                      # 装成带戳的\n` +
+          `      rm -rf "${c.dir}" && git clone <repo> "${c.dir}"   # 或装成仓库`
       );
     else if (c.ver !== myVer)
       warn(
         "副本",
         `${line}  ← ${c.ver === "?" ? "读不出引擎版本" : `引擎比这份（${myVer}）旧`}`,
-        `git -C "${c.dir}" pull`
+        c.isRepo ? `git -C "${c.dir}" pull` : `npx videohand@latest install`
       );
     else ok("副本", line);
   }
   if (!drift.length)
-    ok("副本一致性", `${copies.length} 份全是仓库，引擎都是 ${myVer}`);
+    ok("副本一致性", `${copies.length} 份都能自证版本，引擎都是 ${myVer}`);
   else
     console.error(""); // 让下面的提醒不贴着上一段
 }
@@ -208,7 +222,13 @@ console.log("");
 if (!bads.length) {
   console.log("◇ 都齐了。跟你的 agent 说「把这段话做成手绘视频：…」就能开工。");
   console.log(`  先逛一圈 64 张卡：open ${pg}`);
-  process.exit(0);
-}
-console.log(`◇ ${bads.length} 项缺件 —— 上面每条都带了怎么修`);
-process.exit(1);
+}else console.log(`◇ ${bads.length} 项缺件 —— 上面每条都带了怎么修`);
+
+/* 「你手上这份旧了」也是一种缺件，只是它不该改变退出码 ——
+   装得好好的环境不能因为上游发了新版就判失败。查不到就静默跳过。 */
+try {
+  const { printUpdateNotice } = await import("./update-check.mjs");
+  await printUpdateNotice(myVer);
+} catch {}
+
+process.exit(bads.length ? 1 : 0);
