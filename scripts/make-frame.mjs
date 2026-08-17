@@ -165,15 +165,25 @@ function genFrame(f) {
   if (W !== 1080 || H !== 1920)
     head = head.replaceAll("1080px", `${W}px`).replaceAll("1920px", `${H}px`);
 
+  // 卡体从 6 空格缩进（卡库里）调到 10 空格（帧的 IIFE 里）
+  const body = card.body.replace(/^ {6}/gm, "          ").trimEnd();
+
   /* 自动出场：给每个 boxText 变量补 wordsOut（有进必有出）。
-     笔画不出 —— 已验收成片的惯例是形状留到缝把它盖掉。 */
-  const textVars = [...card.body.matchAll(/var (\w+) = S\.boxText\(/g)].map((m) => m[1]);
+     笔画不出 —— 已验收成片的惯例是形状留到缝把它盖掉。
+
+     只认**卡体顶层**声明的（重缩进后正好 10 空格）。声明在 forEach 闭包里的变量
+     （pipeline-arrow-flow 的 lb / terminal-scribble 的 el / box-unpack 的 t）在这里
+     根本不可见，硬补一行就是 `ReferenceError: lb is not defined` —— 整帧脚本当场挂掉，
+     形状一个都不动，成片里那一格是一整段纯白，而单帧预览看不出来（只有 check 的
+     Runtime 段会报）。这类文本改为报一行，出场手补：在循环里收进一个数组再统一 wordsOut。 */
+  const textVars = [...body.matchAll(/^ {10}var (\w+) = S\.boxText\(/gm)].map((m) => m[1]);
+  const nested = [...body.matchAll(/^ {12,}var (\w+) = S\.boxText\(/gm)].map((m) => m[1]);
+  if (nested.length && !SELFTEST)
+    warn(`${f.comp}: ${nested.join(" / ")} 在闭环里声明（${f.card}），自动出场跳过 ——` +
+      ` 在循环里收进数组再 HW.wordsOut，手补在帧里`);
   const exits = textVars
     .map((v, i) => `          HW.wordsOut(tl, ${v}, { at: DUR - ${(0.6 - i * 0.08).toFixed(2)} });`)
     .join("\n");
-
-  // 卡体从 6 空格缩进（卡库里）调到 10 空格（帧的 IIFE 里）
-  const body = card.body.replace(/^ {6}/gm, "          ").trimEnd();
 
   const caps = (f.captions || [])
     .map((c) => `            { t: ${c.t}, d: ${c.d}, text: ${JSON.stringify(c.text)}${c.key ? `, key: ${JSON.stringify(c.key)}` : ""} },`)

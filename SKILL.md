@@ -140,7 +140,9 @@ node tools/gate.mjs . --stage 2 --spans <每格秒数> --captions 1   # 画面�
 
 > **为什么闸长这样、怎么给别的出片线套一套同样的闸**：见 `tools/README.md`。
 > 这条 skill 踩过的具体坑在 `references/pitfalls.md`：
-> 版面 / 转场 / 验收在第六节，**合成之后才发作的那一类在第八节**。
+> 版面 / 转场 / 验收在第六节，**合成之后才发作的那一类在第八节**，
+> **工具之间互相不认账的那一类在第九节** —— 生成器生成的代码过不了闸、
+> 卡库自带的参数过不了闸，你什么都没做错也会中，第一次遇到会以为是自己写错了。
 
 ---
 
@@ -323,6 +325,7 @@ X.T ["ink-blot"](DUR - 0.40, SEAM_OUT);    // 结尾：给下一格盖上
 | 挑转场、算 SEED | `references/transitions.md` |
 | 配音、字幕时间戳 | `references/voice-pipeline.md` |
 | 出了怪事，尤其是「合成之后才发作」的 | `references/pitfalls.md` 第八节 |
+| 生成器 / 卡库 / 闸互相打架（明明照文档走还是不过） | `references/pitfalls.md` 第九节 |
 | 想给别的出片线套同一套闸 | `tools/README.md` |
 
 `assets/hw-kit.js` 是引擎（笔画原语 + 槽位 + 编排器 + 审计 + 字幕），
