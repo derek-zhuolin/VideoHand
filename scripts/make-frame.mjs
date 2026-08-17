@@ -28,9 +28,29 @@
  *   "seamIn":  { "type": "paper-slide", "seed": 77 },   // 可选。跟上一格的 seamOut 同 seed
  *   "seamOut": { "type": "ink-blot",    "seed": 78 },   // 可选。硬切就都不写
  *   "captions": [ { "t": 0.09, "d": 1.05, "text": "≤14 字", "key": "重点词" } ],
+ *   "support": { "text": "脸是可选项", "at": 2.5 },        // 版面第二层，见下
  *   "size": [1080, 1920]                   // 可选，默认竖屏
  * }
  * 批量：{ "frames": [ {…}, {…} ] }（顶层键会作为每帧的默认值合并进去）
+ *
+ * ── support：版面三层的第二层，是必填项 ───────────────────────
+ * 只往 hero 里放一个主体，SAFE 里就会留下一条 >25% 的连续空带，画面从中间断成两截
+ * （`gate.mjs` 的画面审计会抓，见 references/pitfalls.md 第 26 条）。这是**帧的结构
+ * 要求**，属于低自由度区 —— 所以它归脚本管，不靠人每次记得。
+ *
+ *   "support": { "text": "脸是可选项", "at": 2.5, "zone": "under", "mark": true }
+ *   "support": [ { "text": "为什么", "zone": "kicker" }, { "text": "脸是可选项" } ]  // 要几层给几层
+ *   "support": null      // 明确声明这一格不需要（卡自己就把版面铺满了），不再报
+ *
+ * | 键 | 默认 | 说明 |
+ * |---|---|---|
+ * | text | 必填 | 锚点级短语，≤10 字。整句话交给字幕，别在这儿复读（同 cfg 走复读检查）|
+ * | zone | "under" | `under` = SAFE 78%–87%（画面 58%–72% 那条带）；`kicker` = 顶部眉标 |
+ * | at   | under 2.0 / kicker 0.3 | 出现时刻。挑**语义拐点**，别跟着口播逐词蹦 |
+ * | mark | under 才有，默认 true | 文字上方一记马克笔勾（accent 笔画）|
+ *
+ * 缺了 `support` 又没写 `null`：普通格报一行 ℹ；**I 族落版格直接失败** ——
+ * 「落版格不是一行字」是硬规则，至少三层（主视觉 / 落版字 / 支撑信息）。
  *
  * 生成之后照旧过五道闸 —— 这个脚本消灭的是抄写错误，不替代验收。
  */
@@ -102,7 +122,10 @@ function extractCard(name) {
       cfgKeys = [...cardsSrc.slice(cs, ce).matchAll(/(\w+):/g)].map((m) => m[1])
         .filter((k) => !["en", "zh"].includes(k));
   }
-  return { body, cfgKeys };
+  /* 卡族（A 开场 … I 落版）—— 落版格的支撑层是硬规则，得知道这张卡是不是 I 族。
+     解析方式跟 scene-lint 一致：卡库里的 `family: "I closing"` 就是真源。 */
+  const famM = cardsSrc.slice(at, buildAt).match(/family:\s*"([A-Z])/);
+  return { body, cfgKeys, family: famM ? famM[1] : null };
 }
 
 const allNames = [...cardsSrc.matchAll(/name: "([a-z0-9-]+)"/g)].map((m) => m[1]);
@@ -146,11 +169,33 @@ function genFrame(f) {
     if (c.key && !c.text.includes(c.key)) warn(`${f.comp}: key「${c.key}」不在字幕文本里，高亮会落空`);
   }
 
+  /* ── 支撑层：版面三层的第二层 ─────────────────────────────────
+     `S.safe` 只管「别出界」，不管「别断层」：只往 hero 里放一个主体，
+     58%–75% 会系统性地空着，画面从中间断成两截（第 26 条）。这是帧的**结构**要求，
+     所以放在这儿由脚本生成，而不是等 gate 抓到再回头手补 —— 实测那样一支片要返工两次。 */
+  const support = f.support === undefined ? undefined : f.support === null ? [] : [].concat(f.support);
+  if (support === undefined && !SELFTEST) {
+    const msg = `${f.comp}: spec 没写 support —— 这一格只有主视觉一层，SAFE 里大概率有 >25% 的连续空带`;
+    if (card.family === "I")
+      die(`${msg}。**落版格不是「一行字」**：至少三层（主视觉 / 落版字 / 支撑信息）。` +
+        ` 补 "support": { "text": "…" }，或确认卡自己铺满了再写 "support": null`);
+    warn(`${msg}（gate 的画面审计会抓）。补 "support": { "text": "…" }，或写 "support": null 声明不需要`);
+  }
+  for (const s of support || []) {
+    if (!s.text) die(`${f.comp}: support 缺 "text"`);
+    if (s.zone && !["under", "kicker"].includes(s.zone))
+      die(`${f.comp}: support.zone 只有 "under" / "kicker"，不认识 "${s.zone}"`);
+    if (s.text.length > 10 && !SELFTEST)
+      warn(`${f.comp}: 支撑层「${s.text}」${s.text.length} 字 > 10 —— 支撑层是锚点级短语，整句话交给字幕`);
+  }
+
   /* 复读检查：字幕层负责原话，画面层负责抽象（见 SKILL.md「语义图解」）。
      画面文字与本帧字幕连续重合 ≥6 字 = 画面在给字幕当放大复读机 ——
      两条信息通道说同一句话，等于浪费一条。真实反馈原话：
-     「字幕和画面上内容是重复的，画面内容要抽象化」。 */
-  const cfgTexts = Object.values(f.cfg).filter((v) => typeof v === "string" && /[一-鿿]/.test(v));
+     「字幕和画面上内容是重复的，画面内容要抽象化」。
+     支撑层的文字同样是画面文字，一起过这道检查。 */
+  const cfgTexts = Object.values(f.cfg).concat((support || []).map((s) => s.text))
+    .filter((v) => typeof v === "string" && /[一-鿿]/.test(v));
   for (const cv of cfgTexts) {
     for (const c of f.captions || []) {
       const run = longestRun(cv, c.text);
@@ -189,6 +234,34 @@ function genFrame(f) {
     .map((c) => `            { t: ${c.t}, d: ${c.d}, text: ${JSON.stringify(c.text)}${c.key ? `, key: ${JSON.stringify(c.key)}` : ""} },`)
     .join("\n");
 
+  /* 支撑层的代码生成。槽位一律走 S.safe 的比例，卡里不写像素（layout.md）：
+       under  = SAFE 78%–87%  → 画面 58%–72%，正是主体与字幕带之间那条空带
+       kicker = SAFE 14%–21%  → 顶部眉标，接上「SAFE 顶到主体」那一截
+     出场时刻默认落在语义拐点附近而不是 0：支撑层是「补一句」，不是跟主体一起蹦出来。 */
+  const sup = (support || []).map((s, i) => {
+    const zone = s.zone || "under";
+    const at = s.at === undefined ? (zone === "kicker" ? 0.3 : Math.min(2.0, +(f.dur * 0.45).toFixed(2))) : s.at;
+    const mark = zone === "under" ? (s.mark === undefined ? true : !!s.mark) : false;
+    const box = zone === "kicker"
+      ? "S.safe.x + S.safe.w * 0.3, S.safe.y + S.safe.h * 0.14, S.safe.w * 0.4, S.safe.h * 0.07"
+      : "S.safe.x + S.safe.w * 0.2, S.safe.y + S.safe.h * 0.8, S.safe.w * 0.6, S.safe.h * 0.09";
+    const L = [
+      `          var SUP${i} = S.rect(${box});`,
+      `          var SUPT${i} = S.boxText(SUP${i}, ${JSON.stringify(s.text)}, { role: "label", maxLines: 1, color: "var(--hw-ink-soft)" });`,
+    ];
+    if (mark) {
+      L.push(
+        `          var SUPM${i} = S.add(HW.wave(S.safe.w * 0.16, { seed: SEED + 7${i ? ` + ${i}` : ""} }),`,
+        `            { x: SUP${i}.cx - S.safe.w * 0.08, y: SUP${i}.y - S.safe.h * 0.012, ink: "accent", seed: SEED + 7${i ? ` + ${i}` : ""} });`,
+        `          HW.draw(tl, SUPM${i}, { at: ${+(at - 0.16).toFixed(2)}, dur: 0.34 });`,
+      );
+    }
+    L.push(`          HW.wordsIn(tl, SUPT${i}, { at: ${at}, step: 0.07 });`);
+    if (mark) L.push(`          HW.boil(tl, SUPM${i}, { seed: SEED + 7${i ? ` + ${i}` : ""} });`);
+    L.push(`          HW.wordsOut(tl, SUPT${i}, { at: DUR - ${(0.42 - i * 0.05).toFixed(2)} });`);
+    return L.join("\n");
+  }).join("\n");
+
   return `${head}
 
       <!-- 由 make-frame.mjs 生成（卡：${f.card}）。这是普通 HTML，随便手改 ——
@@ -212,7 +285,12 @@ function genFrame(f) {
 ${f.seamIn ? `\n          X.TI[${JSON.stringify(f.seamIn.type)}](${f.seamIn.seed}); /* 揭开上一格的盖子，seed 同上一格 seamOut */\n` : ""}
           /* ── 卡体（自 assets/hw-cards.js · ${f.card}，生成时提取，勿与卡库漂移）── */
 ${body}
-
+${sup ? `
+          /* ── 支撑层（spec 的 support）—— 版面三层的第二层。
+               主体只占 hero，58%–75% 会空着，画面从中间断成两截；这一层把它接上。
+               出现时刻挑语义拐点，别跟着口播逐词蹦。 */
+${sup}
+` : ""}
           /* ── 有进必有出（自动补的 wordsOut；要更讲究就手调）── */
 ${exits || "          /* 该卡没有 boxText 文本 —— 出场按需手补 */"}
 ${caps ? `\n          HW.captions(tl, S, [\n${caps}\n          ]);\n` : ""}${f.seamOut ? `          X.T[${JSON.stringify(f.seamOut.type)}](DUR - 0.40, ${f.seamOut.seed}); /* 给下一格盖上，seed 同下一格 seamIn */\n` : ""}
@@ -238,7 +316,11 @@ if (SELFTEST) {
   let fail = 0;
   for (const [i, n] of allNames.entries()) {
     try {
-      const html = genFrame({ comp: `c${i}`, card: n, dur: 3, seed: i + 1, cfg: {} });
+      /* 带上两种 zone 的支撑层 —— 支撑层也是生成的代码，它的语法一样要被查到 */
+      const html = genFrame({
+        comp: `c${i}`, card: n, dur: 3, seed: i + 1, cfg: {},
+        support: [{ text: "支撑一句" }, { text: "眉标", zone: "kicker" }],
+      });
       const js = html.split("<script>").pop().split("</script>")[0];
       const probe = join(dir, "probe.mjs");
       writeFileSync(probe, js);
