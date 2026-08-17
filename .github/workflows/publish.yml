@@ -1,6 +1,6 @@
 name: Publish
 
-# 把「Derek 打了个 tag」变成「所有装过的人都能收到更新提示」。
+# 把「维护者打了个 tag」变成「所有装过的人都能收到更新提示」。
 #
 # 链路是这样接起来的：
 #   打 tag v2.2.0  →  这个 workflow 发 npm  →  registry 的 latest 变了

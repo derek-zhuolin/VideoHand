@@ -18,7 +18,7 @@
 **这份文件定的是产物契约，不绑任何一家 TTS。** 只要产出 `audio/NN.wav` +
 `audio_meta.json`（词级时间戳 + 口型包络），下游的建帧、字幕、口型全都照走。
 
-工作台用户的入口是它的 `tools/tts.sh`（属于工作台，不随本包分发）——
+若你的 agent 工作台自带 TTS 入口（例如某个 `tts.sh`），用它即可（不随本包分发）——
 别直接去调 TTS 的 python 脚本 ——
 代理、venv、凭证优先级都在这个壳里处理了。绕过它就要自己踩一遍：
 本机 socks5 的 `ALL_PROXY` 会挡住火山 API（报 `Missing dependencies for SOCKS support`），
