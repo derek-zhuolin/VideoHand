@@ -84,6 +84,24 @@ function isDirtyRepo(dir) {
   }
 }
 
+/* 能不能安全地自动搬走这个目录？
+ *
+ * 「搬」之后紧接着就是 cpSync(force:true) 覆盖 —— 所以这个判断的真实含义是
+ * **「这里面有没有可能是别人的东西」**，答错一次就是静默的数据丢失。
+ *
+ * 只有两种情况敢说没有：
+ *   · 干净的 git 仓库 —— 它自己能证明工作区和某个 commit 一致
+ *   · 带我们自己写的安装戳 —— 那是上一次 npx videohand install 放的
+ *
+ * 其余一律不碰。裸目录尤其危险：**它看起来"不脏"，只是因为它根本没法说自己脏。**
+ * 把"无法判断"当成"没问题"，正是这个仓库 doctor 那节踩过的坑。
+ */
+function safeToMigrate(dir) {
+  if (existsSync(join(dir, ".videohand-install.json"))) return true;
+  if (existsSync(join(dir, ".git"))) return !isDirtyRepo(dir);
+  return false;
+}
+
 function install() {
   head(`videohand ${PKG.version} 安装`);
 
@@ -108,8 +126,9 @@ function install() {
     // 旧名迁移：这个 skill 以前叫 handdrawn。不处理会新旧两份并存，
     // agent 认哪份取决于它先扫到谁 —— 而两份的差别要渲片才看得见。
     if (existsSync(old) && !existsSync(dest)) {
-      if (isDirtyRepo(old)) {
-        say(`⚠ ${label} — 旧名 ${LEGACY}/ 有未提交改动，没动它（那可能是你自己调的参数）`);
+      if (!safeToMigrate(old)) {
+        say(`⚠ ${label} — 旧名 ${LEGACY}/ 说不清里面有没有你自己的改动，没动它`);
+        say(`  确认没用了就删：rm -rf "${old}"，然后重跑`);
       } else {
         try {
           renameSync(old, dest);
@@ -122,9 +141,11 @@ function install() {
       say(`⚠ ${label} — 新旧两份并存，旧的确认没用了就删：rm -rf "${old}"`);
     }
 
-    // 别人的 git 仓库有未提交改动 —— 覆盖会毁掉他的工作。停下报告。
-    if (isDirtyRepo(dest)) {
-      say(`⚠ ${label} — ${dest} 有未提交改动，跳过（先 commit 或 stash 再重跑）`);
+    // 装 = 往 dest 里 cpSync(force:true)。所以动手前必须确认那里面不是别人的东西。
+    // 同一个判断，同一个理由：说不清就别覆盖。
+    if (existsSync(dest) && !safeToMigrate(dest)) {
+      say(`⚠ ${label} — ${dest} 已存在，且说不清里面有没有你的改动，跳过`);
+      say(`  git 仓库先 commit/stash；其他情况确认没用了就 rm -rf 再重跑`);
       skipped++;
       continue;
     }

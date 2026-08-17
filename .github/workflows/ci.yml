@@ -40,3 +40,78 @@ jobs:
           name: playground
           path: playground/index.html
           retention-days: 7
+
+  # ────────────────────────────────────────────────────────────────
+  # 「别人电脑上什么都没有，能不能装起来用」—— 这件事只能在**别人的电脑**上证。
+  #
+  # 开发机永远证不了：那上面早就装好了字体、拉过 hyperframes、npm 缓存是热的，
+  # 连 skill 目录都是现成的。装机脚本在开发机上跑通，说明的仅仅是「它没语法错」。
+  #
+  # 全新 runner 每次都是一台真·裸机。macOS 那栏不是凑数 —— 这个仓库修过一次
+  # 「其他平台跑不出画面」，跨平台是踩过的坑，不是假想。
+  install:
+    name: 裸机装得上吗（${{ matrix.os }}）
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"   # package.json 声明的下限，就按下限测
+
+      - name: 装 ffmpeg（渲染那步要，doctor 会查）
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          else brew install ffmpeg; fi
+
+      - name: 打包
+        run: npm pack
+
+      - name: 包里的中文字体必须是完整的 1.4MB
+        # 这条单独立一步，因为它是这个仓库最隐蔽的坑：woff2 被传输链路截成
+        # 几十字节的指针后，片子照出，只是中文全部掉回系统宋体 ——
+        # 不盯着成片看根本发现不了。让 CI 替人盯。
+        run: |
+          tar -xzf videohand-*.tgz
+          SIZE=$(wc -c < package/assets/fonts/Xiaolai-subset.woff2)
+          echo "中文字体 $SIZE 字节"
+          test "$SIZE" -gt 1000000 || { echo "✗ 字体被截断了"; exit 1; }
+
+      - name: 全局装上，然后当一个什么都不知道的新用户来用
+        run: |
+          npm install -g ./videohand-*.tgz
+          videohand --version
+          videohand install
+
+      - name: doctor 必须退出码 0
+        run: videohand doctor
+
+      - name: 旧名 handdrawn — 干净仓库要自动迁移
+        # 改名之前装过的人重跑安装会发生什么。这条路径只有测了才知道。
+        run: |
+          rm -rf ~/.claude/skills/videohand ~/.claude/skills/handdrawn
+          git clone -q --depth 1 "$GITHUB_WORKSPACE" ~/.claude/skills/handdrawn
+          videohand install
+          test -d ~/.claude/skills/videohand   || { echo "✗ 没装上"; exit 1; }
+          test ! -d ~/.claude/skills/handdrawn || { echo "✗ 旧目录没被迁移"; exit 1; }
+          echo "✓ 干净仓库已无损迁移"
+
+      - name: 旧名 handdrawn — 说不清的目录一个字节都不许动
+        # 这条比上一条重要：搬完紧接着就是覆盖写，判错一次就是静默的数据丢失。
+        # 裸目录的危险恰恰在于它**看起来"不脏"，只是因为它没法说自己脏**。
+        run: |
+          rm -rf ~/.claude/skills/videohand ~/.claude/skills/handdrawn
+          mkdir -p ~/.claude/skills/handdrawn
+          echo "我自己调的参数" > ~/.claude/skills/handdrawn/my-edit.js
+          videohand install || true
+          test -f ~/.claude/skills/handdrawn/my-edit.js || { echo "✗ 用户的东西被动了"; exit 1; }
+          grep -q "我自己调的参数" ~/.claude/skills/handdrawn/my-edit.js || { echo "✗ 内容被改了"; exit 1; }
+          echo "✓ 说不清的目录原封未动"
+
+      - name: 断网也不许卡住或报错
+        # 更新提醒是附赠信息，不许因为 registry 不通就让工具失败。
+        run: VIDEOHAND_REGISTRY=http://127.0.0.1:1 videohand doctor
