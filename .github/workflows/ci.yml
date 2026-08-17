@@ -120,17 +120,24 @@ jobs:
         # README 开头写的是 `npx github:derek-zhuolin/VideoHand` —— 一个陌生人
         # 复制粘贴的就是这一条。它不通，前面所有验证都白搭。
         #
-        # 钉在 $GITHUB_SHA 上而不是 main：验的必须是**这一次改动**，
-        # 否则 CI 绿了只说明「上一版还行」。
-        #
         # 这条路径不经过 npm registry —— 所以「别人能不能下载完用起来」
         # 不被一次 npm 发布挡住。
+        #
+        # 跑的是**跟 README 一字不差的命令**。早一版自作聪明钉了 $GITHUB_SHA，
+        # 想着「验的得是这一次改动」，结果 npm 把带 ref 的 spec 解析成
+        # ssh://git@github.com/…，runner 上没有 SSH 凭据，炸在一句看不出所以然的
+        # 「GitFetcher requires an Arborist constructor」上 —— 而这个失败
+        # **只属于我的验证方式，不属于用户**。
+        #
+        # 教训：验证命令跟用户手里那条不一样，验的就不是同一件事。
+        # 这步跑在 push 之后，main 就是这次的 commit，精度足够。
         run: |
+          echo "node $(node -v) / npm $(npm -v)"
           rm -rf ~/.claude/skills/videohand ~/.claude/skills/handdrawn
-          npx -y "github:derek-zhuolin/VideoHand#$GITHUB_SHA" install
+          npx -y github:derek-zhuolin/VideoHand install
           test -f ~/.claude/skills/videohand/.videohand-install.json \
             || { echo "✗ 没装上或没写版本戳"; exit 1; }
           SIZE=$(wc -c < ~/.claude/skills/videohand/assets/fonts/Xiaolai-subset.woff2)
           test "$SIZE" -gt 1000000 || { echo "✗ 装完字体是坏的（$SIZE 字节）"; exit 1; }
-          npx -y "github:derek-zhuolin/VideoHand#$GITHUB_SHA" doctor
+          npx -y github:derek-zhuolin/VideoHand doctor
           echo "✓ 从 GitHub 直装可用，不需要 npm registry"
