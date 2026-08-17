@@ -753,11 +753,11 @@
       "display:flex;align-items:center;justify-content:center;pointer-events:none";
     (S.layer || S.root).appendChild(host);
 
-    /* 字号：竖屏 1080 短边 × 0.044 ≈ 48px。以前是 0.052（≈56px）—— 实测偏大，
-       两行中文几乎顶满整条带子，胶带被撑成一块板，抢主体。字幕是"跟读用的第二条
+    /* 字号：竖屏 1080 短边 × 0.038 ≈ 41px。这个值降过两次（0.052 → 0.044 → 0.038），
+       两次都是同一个方向的实测反馈：字幕大了就跟主体抢。字幕是"跟读用的第二条
        信息通道"，不是标题；它该让人扫一眼就回到画面上，所以要比主体明显小一档。
        长句同样别靠调大字号救，靠 HW.wrapZh 断成两行短句。 */
-    var FS = Math.round(S.short * opt(o, "size", 0.044));
+    var FS = Math.round(S.short * opt(o, "size", 0.038));
     /* 颜色走本帧已装好的调色板（HW.stage 会把它内联到根上），var() 只作兜底。
        写死 #141615 那版在"变量落空"的平台上会让字幕跟画风脱节：笔画是墨绿，
        字幕是中性灰黑。 */
@@ -772,9 +772,12 @@
       card.style.cssText =
         "position:absolute;max-width:100%;padding:" + Math.round(FS * 0.46) + "px " + Math.round(FS * 0.72) + "px;" +
         "border-radius:" + Math.round(FS * 0.34) + "px;" +
-        "background:rgba(255,255,255,0.62);" +
+        /* 胶带底 0.78：0.62 那版在笔画密的帧上，字和透过来的笔画糊在一起（实测截图反馈）。
+           投影收小压淡（26px/0.10 → 14px/0.07）—— 大投影在纸面上会和字自己的暗部叠出
+           一圈脏边；胶带的"浮起感"主要靠发丝亮边 + 更实的底，不靠影子拉开。 */
+        "background:rgba(255,255,255,0.78);" +
         "-webkit-backdrop-filter:blur(14px) saturate(1.15);backdrop-filter:blur(14px) saturate(1.15);" +
-        "box-shadow:0 1px 0 rgba(255,255,255,0.9) inset,0 0 0 1px rgba(20,22,21,0.07),0 10px 26px rgba(20,22,21,0.10);" +
+        "box-shadow:0 1px 0 rgba(255,255,255,0.9) inset,0 0 0 1px rgba(20,22,21,0.07),0 6px 14px rgba(20,22,21,0.07);" +
         "font-family:" + (pal["--hw-font-print"] || "'Xiaolai','Excalifont',sans-serif") +
         ";font-size:" + FS + "px;line-height:1.42;" +
         "color:" + ink + ";text-align:center;white-space:pre-line;opacity:0";

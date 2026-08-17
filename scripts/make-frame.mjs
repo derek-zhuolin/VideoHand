@@ -115,6 +115,18 @@ const HEAD = boiler.slice(0, styleEnd + "</style>".length);
 
 const SEAMS = ["scribble-wipe", "paper-slide", "ink-blot", "eraser-swipe"];
 
+/* 两串中文的最长连续公共子串（O(n·m)，串都很短，够用）*/
+function longestRun(a, b) {
+  let best = "";
+  for (let i = 0; i < a.length; i++)
+    for (let j = 0; j < b.length; j++) {
+      let k = 0;
+      while (i + k < a.length && j + k < b.length && a[i + k] === b[j + k]) k++;
+      if (k > best.length) best = a.slice(i, i + k);
+    }
+  return best;
+}
+
 function genFrame(f) {
   for (const k of ["comp", "card", "dur", "seed", "cfg"])
     if (f[k] === undefined) die(`帧 ${f.comp || "?"} 缺字段 ${k}`);
@@ -132,6 +144,20 @@ function genFrame(f) {
   for (const c of f.captions || []) {
     if (c.text.length > 14) warn(`${f.comp}: 字幕「${c.text}」${c.text.length} 字 > 14 —— 按停顿切短`);
     if (c.key && !c.text.includes(c.key)) warn(`${f.comp}: key「${c.key}」不在字幕文本里，高亮会落空`);
+  }
+
+  /* 复读检查：字幕层负责原话，画面层负责抽象（见 SKILL.md「语义图解」）。
+     画面文字与本帧字幕连续重合 ≥6 字 = 画面在给字幕当放大复读机 ——
+     两条信息通道说同一句话，等于浪费一条。真实反馈原话：
+     「字幕和画面上内容是重复的，画面内容要抽象化」。 */
+  const cfgTexts = Object.values(f.cfg).filter((v) => typeof v === "string" && /[一-鿿]/.test(v));
+  for (const cv of cfgTexts) {
+    for (const c of f.captions || []) {
+      const run = longestRun(cv, c.text);
+      if (run.length >= 6)
+        warn(`${f.comp}: 画面文字「${cv}」与字幕「${c.text}」连续重合「${run}」(${run.length} 字) ——` +
+          ` 画面在复读字幕。画面上只留锚点级短语（数字 / ≤6 字关键词），整句话交给字幕`);
+    }
   }
 
   const [W, H] = f.size || [1080, 1920];
