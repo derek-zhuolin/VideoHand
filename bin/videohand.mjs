@@ -160,7 +160,7 @@ function install() {
       // 版本戳 —— 让这份复制体能自证版本，替代 git log 的角色
       writeFileSync(
         join(dest, ".videohand-install.json"),
-        JSON.stringify({ version: PKG.version, engine: engineVersion(), source: "npm", installedAt: new Date().toISOString() }, null, 2)
+        JSON.stringify({ version: PKG.version, engine: engineVersion(), source: "npx", installedAt: new Date().toISOString() }, null, 2)
       );
       say(`＋ ${label} — ${dest}`);
       done++;

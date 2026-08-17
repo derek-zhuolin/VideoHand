@@ -115,3 +115,22 @@ jobs:
       - name: 断网也不许卡住或报错
         # 更新提醒是附赠信息，不许因为 registry 不通就让工具失败。
         run: VIDEOHAND_REGISTRY=http://127.0.0.1:1 videohand doctor
+
+      - name: README 第一条命令必须真的能用
+        # README 开头写的是 `npx github:derek-zhuolin/VideoHand` —— 一个陌生人
+        # 复制粘贴的就是这一条。它不通，前面所有验证都白搭。
+        #
+        # 钉在 $GITHUB_SHA 上而不是 main：验的必须是**这一次改动**，
+        # 否则 CI 绿了只说明「上一版还行」。
+        #
+        # 这条路径不经过 npm registry —— 所以「别人能不能下载完用起来」
+        # 不被一次 npm 发布挡住。
+        run: |
+          rm -rf ~/.claude/skills/videohand ~/.claude/skills/handdrawn
+          npx -y "github:derek-zhuolin/VideoHand#$GITHUB_SHA" install
+          test -f ~/.claude/skills/videohand/.videohand-install.json \
+            || { echo "✗ 没装上或没写版本戳"; exit 1; }
+          SIZE=$(wc -c < ~/.claude/skills/videohand/assets/fonts/Xiaolai-subset.woff2)
+          test "$SIZE" -gt 1000000 || { echo "✗ 装完字体是坏的（$SIZE 字节）"; exit 1; }
+          npx -y "github:derek-zhuolin/VideoHand#$GITHUB_SHA" doctor
+          echo "✓ 从 GitHub 直装可用，不需要 npm registry"

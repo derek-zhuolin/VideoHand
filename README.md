@@ -7,7 +7,7 @@
 [![node](https://img.shields.io/node/v/videohand.svg)](https://nodejs.org)
 
 ```bash
-npx videohand
+npx github:derek-zhuolin/VideoHand
 ```
 
 不是把字打进模板，是让每一句话自己决定它该长什么样。
@@ -77,10 +77,13 @@ Excalidraw 自己那套手绘渲染引擎，字体也沿用 Excalidraw 的官方
 ## 装
 
 ```bash
-npx videohand
+npx github:derek-zhuolin/VideoHand
 ```
 
 完事。**你需要预先装好的东西只有一样：[Node](https://nodejs.org) ≥ 22。**
+
+> `npx` 认得 GitHub，所以这条命令直接从这个仓库装，**不经过 npm registry**。
+> 你不需要有 npm 账号，也不需要先会 git。
 
 > 为什么是 22：渲染引擎 HyperFrames 自己声明了 `engines.node >=22`。Node 20 上
 > 这个 skill 装得上、自检也几乎全绿，但**一渲染就废** —— npx 会因为那条约束直接
@@ -96,15 +99,21 @@ npx videohand
 | **ffmpeg** | 只有**最后渲成 MP4** 那一步要。前面选卡、建帧、看效果都不需要 |
 | 某家模型 / 某个 API key | **不用**。这个目录就是 skill 本身，不绑定任何一家 |
 
-`npx videohand` 会探测你本机装了哪些 agent（Claude Code / agents / Codex / Cursor /
-Crush / Gemini / WorkBuddy），往每个**已经存在**的 skill 目录里装一份。没装的工具
-不去凭空建目录 —— 那只会在你机器上留一堆你从没用过的空壳。
+它会探测你本机装了哪些 agent（Claude Code / agents / Codex / Cursor / Crush /
+Gemini / WorkBuddy），往每个**已经存在**的 skill 目录里装一份。没装的工具不去凭空
+建目录 —— 那只会在你机器上留一堆你从没用过的空壳。
 
 装完先看看它能画什么：
 
 ```bash
-npx videohand playground     # 生成 64 张卡的动图墙，浏览器里直接看
+VH="github:derek-zhuolin/VideoHand"
+npx $VH playground     # 生成 64 张卡的动图墙，浏览器里直接看
+npx $VH doctor         # 出问题时：缺什么、坏在哪、怎么修
 ```
+
+> 等这个包发上 npm 之后，`github:derek-zhuolin/VideoHand` 可以简写成 `videohand`
+> ——两者装出来的东西完全一样。[![npm](https://img.shields.io/npm/v/videohand.svg)](https://www.npmjs.com/package/videohand)
+> 这个徽章亮起来就说明发好了。
 
 ### 另外两条路
 
@@ -115,7 +124,7 @@ git clone https://github.com/derek-zhuolin/VideoHand.git ~/.claude/skills/videoh
 node ~/.claude/skills/videohand/tools/doctor.mjs
 ```
 
-或者让脚本替你探测 agent 目录再 clone（等价于 `npx videohand`，只是走 git）：
+或者让脚本替你探测 agent 目录再 clone（等价于上面那条 npx，只是走 git）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/derek-zhuolin/VideoHand/main/tools/install.sh | bash
@@ -129,7 +138,7 @@ curl -fsSL https://raw.githubusercontent.com/derek-zhuolin/VideoHand/main/tools/
 相应地从 `/handdrawn` 变成 `/videohand`。
 
 ```bash
-npx videohand      # 它会自己认出旧目录
+npx github:derek-zhuolin/VideoHand    # 它会自己认出旧目录
 ```
 
 - 旧目录是**干净的 git 仓库** → 直接改名搬过去，无损。
@@ -144,7 +153,7 @@ npx videohand      # 它会自己认出旧目录
 先跑自检。它把"跑不起来"拆成几种不同的原因，每条都带一句能直接粘贴的命令：
 
 ```bash
-npx videohand doctor
+npx github:derek-zhuolin/VideoHand doctor
 ```
 
 查这六件事：Node 版本、ffmpeg、skill 的件是否齐、**中文字体是不是被截成了指针**
@@ -169,7 +178,14 @@ npx videohand doctor
 小时**。断网、内网、registry 不通都不会让它失败或变慢。嫌烦就
 `export VIDEOHAND_NO_UPDATE_CHECK=1` 彻底关掉。
 
-git clone 装的那份不吃这套提醒，用 `git -C ~/.claude/skills/videohand pull` 拉。
+提醒的依据是 npm 上的版本，所以**在这个包发上 npm 之前，它查不到就一声不吭**
+（这是设计好的：宁可不提醒，也不要瞎提醒）。在那之前想拉最新的，重跑一次安装命令即可
+——`npx` 每次都去 GitHub 取当前的 main：
+
+```bash
+npx github:derek-zhuolin/VideoHand      # 重跑 = 更新
+git -C ~/.claude/skills/videohand pull  # git clone 装的那份走这条
+```
 
 ### 为什么不是复制、也不是软链
 
@@ -196,7 +212,7 @@ agent 在用哪份。这个坑踩过不止一次：某个 skill 目录里躺着�
 
 | 规矩 | 谁来查 |
 |---|---|
-| skill 目录里的每一份都得能说出自己是哪版（git 仓库，或带安装戳） | `npx videohand doctor` 的副本盘点 |
+| skill 目录里的每一份都得能说出自己是哪版（git 仓库，或带安装戳） | `npx … doctor` 的副本盘点 |
 | 每支片带的 `assets/` 必须跟 skill 那份逐字节一致 | `portability-lint` 第四条，按内容哈希比 |
 
 第二条尤其容易中招：建片时会把 `assets/` 复制进片目录，**改完 skill 的引擎不同步过去，
