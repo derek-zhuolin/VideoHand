@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * emit-docs.mjs — 把 64 格墙发射成「不装就能看见」的 docs/ 产物
+ * emit-docs.mjs — 把 63 格墙发射成「不装就能看见」的 docs/ 产物
  *
  * 产出三样，全部入库：
- *   docs/index.html               自包含 64 格墙（与 playground/index.html 同源）
+ *   docs/index.html               自包含 63 格墙（与 playground/index.html 同源）
  *   docs/assets/cards/<name>.png  每卡一张 480×480 静帧（9:16 定格）
  *   docs/assets/wall.gif          16 张精选卡 3s 动图（4×4 / 16:9，≤4MB 硬闸）
  *
- * wall.gif 为什么只放 16 张：README 首屏那张图宽 720px，64 格摊开每格只剩 84px，
+ * wall.gif 为什么只放 16 张：README 首屏那张图宽 720px，63 格摊开每格只剩 84px，
  * GIF 的 128 色调色板再一压就是一片糊。16 格每格 176px，笔画看得清；
- * 全部 64 张的动图墙由在线 playground 承担，README 在图下挂链接。
+ * 全部 63 张的动图墙由在线 playground 承担，README 在图下挂链接。
  *
  * 零 npm 依赖 —— 跟 ci-check 一样只要机器上有 Chrome；合 gif 用 ffmpeg（doctor 已查它）。
  * 入口是 `node scripts/build-gallery.mjs --emit docs`，它先重建 playground 再调这里。
@@ -28,7 +28,7 @@ import { tmpdir } from "node:os";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, process.argv.filter((a) => !a.startsWith("--"))[2] || "docs");
-/* --only=wall：只重出 wall.gif（卡帧照旧不动）。调 gif 参数时不用重截 64 张卡。 */
+/* --only=wall：只重出 wall.gif（卡帧照旧不动）。调 gif 参数时不用重截 63 张卡。 */
 const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").slice(7) || null;
 
 const GIF_LIMIT = 4 * 1024 * 1024; // 仓库别肿：wall.gif 的硬闸

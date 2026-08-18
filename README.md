@@ -1,14 +1,14 @@
 # VideoHand
 
-**Turn a paragraph of text into a hand-drawn, marker-on-paper video — an agent skill that picks the right scene for every sentence from 64 drawn cards.**
+**Turn a paragraph of text into a hand-drawn, marker-on-paper video — an agent skill that picks the right scene for every sentence from 63 drawn cards.**
 
 ```bash
 npx github:derek-zhuolin/VideoHand
 ```
 
-![16 of the 64 hand-drawn cards looping](docs/assets/wall.gif)
+![16 of the 63 hand-drawn cards looping](docs/assets/wall.gif)
 
-*↑ 16 of the 64 cards.* **[▶ See all 64 on the live wall](https://derek-zhuolin.github.io/VideoHand/)** —
+*↑ 16 of the 63 cards.* **[▶ See all 63 on the live wall](https://derek-zhuolin.github.io/VideoHand/)** —
 nothing to install. Switch 9:16 / 16:9 / 1:1 and English / Chinese, and dial the stroke feel
 with four sliders. Every cell runs that card's **real code**, so the wall doubles as a smoke
 test: a broken card shows up red.
@@ -73,7 +73,7 @@ characters, ever.
 
 ## The card library
 
-Nine families, 54 cards + 10 bonus = 64: openers, assertions, lists, flows, comparisons,
+Nine families, 53 cards + 10 bonus = 63: openers, assertions, lists, flows, comparisons,
 data, metaphors, UI frames, end cards. Each card is ~30 lines of config over 65
 deterministic stroke primitives, so adding one is an evening, not a project.
 See them all move on the [live wall](https://derek-zhuolin.github.io/VideoHand/).

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build-gallery.mjs — 重建 64 格动图墙
+ * build-gallery.mjs — 重建 63 格动图墙
  *
  * 用法：node scripts/build-gallery.mjs [--emit <dir>]
  *
