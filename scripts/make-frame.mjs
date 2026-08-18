@@ -208,7 +208,10 @@ function genFrame(f) {
   const [W, H] = f.size || [1080, 1920];
   let head = HEAD;
   if (W !== 1080 || H !== 1920)
-    head = head.replaceAll("1080px", `${W}px`).replaceAll("1920px", `${H}px`);
+    /* 两次顺序 replaceAll 会互相吃掉：横版时 1080px→1920px 之后，第二步又把它变回
+       1080px，整帧变成 1080×1080（成片左半幅有画、右半幅纯白，且四道闸全绿）。
+       走一次性正则，两个尺寸各自命中一次。 */
+    head = head.replace(/\b(1080|1920)px\b/g, (m, n) => (n === "1080" ? `${W}px` : `${H}px`));
 
   // 卡体从 6 空格缩进（卡库里）调到 10 空格（帧的 IIFE 里）
   const body = card.body.replace(/^ {6}/gm, "          ").trimEnd();
