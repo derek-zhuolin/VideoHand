@@ -14,3 +14,6 @@ films/
 # OS / editor noise
 .DS_Store
 node_modules/
+
+# 跨片查重账本（scene-lint 自动维护，本机私有）
+.ledger.json

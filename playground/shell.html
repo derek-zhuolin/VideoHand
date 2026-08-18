@@ -7,7 +7,7 @@
      land on the wrong words — and the substituted characters usually fall outside the font
      subset, which is why half the line turns into a system gothic. Opt out entirely. -->
 <meta name="google" content="notranslate" />
-<title>Videohand — Excalidraw base playground</title>
+<title>Videohand · Excalidraw base playground</title>
 <style>
   /* Excalifont — Excalidraw's own Latin typeface, SIL OFL. */
   @font-face {
@@ -79,11 +79,11 @@
 </head>
 <body>
 <header>
-  <h1>Videohand — Excalidraw base</h1>
+  <h1>Videohand · Excalidraw base</h1>
   <div class="sub">
     Shapes now render through <b>rough.js</b>, the engine Excalidraw itself draws with, and type is
     set in <b>Excalifont</b>. Every cell runs its card's real code. Each cell keeps its own phase so
-    the wall is never blank all at once. Drag the sliders to dial the stroke feel — cards rebuild live.
+    the wall is never blank all at once. Drag the sliders to dial the stroke feel: cards rebuild live.
   </div>
 </header>
 
@@ -216,7 +216,7 @@ CARDS.forEach((card, idx) => {
     '<div class="ln">' + card.line + '</div>' +
     (card.note ? '<div class="note">' + card.note + '</div>' : '') +
     '<div class="tags"><span class="tag">' + card.family + '</span>' +
-    (card.src === "wired" ? '<span class="tag new">new — from wired-elements</span>' :
+    (card.src === "wired" ? '<span class="tag new">new · from wired-elements</span>' :
       isNew ? '<span class="tag new">new — from MotionSet</span>' : '<span class="tag">existing</span>') +
     '</div></div>';
   grid.appendChild(cell);

@@ -6,8 +6,9 @@
 > 每帧两行就能用（见 `SKILL.md` 的「转场」一节）。
 > 照着片段手抄最常见的后果是**只抄了「盖上」那半**，缝里于是出现半秒白场。
 
-> **硬规则**：相邻两条缝禁用同一种转场；全片转场种类 ≥ ⌈缝数/2⌉。
-> `scripts/scene-lint.mjs` 会查。
+> **硬规则**：每条缝都写进 STORYBOARD（硬切写 `transition: hard-cut`）；
+> 相邻两条缝禁用同一种转场（硬切除外——硬切连着来是正常节奏）；
+> 非硬切种类 ≥ ⌈非硬切数/2⌉。`scripts/scene-lint.mjs` 会查。
 
 缩放 / 淡入淡出**依然禁止**——那不是手绘语言，会破坏「纸面连续」的错觉。
 
@@ -130,6 +131,9 @@ tl.to(blind, { scaleY: 0, duration: 0.36, ease: "power4.inOut" }, 0.46);
 ### 8. hard-cut 硬切
 不做任何东西。上一镜 `visibility: hidden`，下一镜 `data-start` 接上。
 **这是默认选项**，其余 7 种是特例。
+
+帧里不写任何 seam 代码，但 **STORYBOARD 里必须写 `transition: hard-cut`**——
+缝不记账，scene-lint 就看不见它，「种类 ≥ ⌈缝数/2⌉」那条规则会退化成永远空过。
 
 ## 已知坑
 
