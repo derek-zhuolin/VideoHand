@@ -1,3 +1,5 @@
+> LEGACY v2 reference. Apply only to existing HW card projects. Doodle projects use doodle-design.md, composition.md and audio.md.
+
 # 色板与字体契约
 
 ## 四色，写在一处

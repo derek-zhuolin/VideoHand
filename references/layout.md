@@ -1,3 +1,5 @@
+> LEGACY v2 reference. Apply only to existing HW card projects. Doodle projects use doodle-design.md, composition.md and audio.md.
+
 # 布局契约 · 卡片声明关系，舞台给坐标
 
 **一句话规矩：卡里不许出现像素数字。** 全部走安全区的比例。

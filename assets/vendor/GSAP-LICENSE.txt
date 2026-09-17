@@ -1,0 +1,8 @@
+GSAP 3.14.2
+Copyright 2025, GreenSock. All rights reserved.
+Subject to the Standard No Charge GSAP License:
+https://gsap.com/standard-license/
+Canonical terms: https://gsap.com/community/standard-license/
+This notice is a license reference, not a replacement for the license terms.
+The unmodified distribution header remains in gsap.min.js.
+GSAP is not covered by VideoHand's MIT license.

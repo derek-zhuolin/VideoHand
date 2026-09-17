@@ -1,0 +1,10 @@
+{
+  "skill_name": "videohand",
+  "evals": [
+    {"id": 1, "prompt": "用 VideoHand 把这段咖啡萃取笔记做成中文 20 秒手绘视频，横竖两版。我提供 voice.wav 与逐句时间。", "expectations": ["优先原始 Oreo 图标与暖纸墨线", "按真实音频时长对齐字幕", "一个萃取例子贯穿，表现因果关系，不强套三步或一句一卡", "两种画幅独立构图并检查实际 MP4", "不读取作者凭证或 Obsidian"]},
+    {"id": 2, "prompt": "这是全新电脑，没有 Hyperframes。用 VideoHand 做一个英文 12 秒静音草稿。", "expectations": ["doctor 报告依赖缺失，不自动全局安装", "建项可独立运行，明确渲染仍需安装 Hyperframes", "本地字体、图标资源，不依赖作者目录", "不把例子中的中文标题或 6 秒时长保留成需求"]},
+    {"id": 3, "prompt": "我要用 settings 图标解释系统配置，沿用 Doodle 风格。", "expectations": ["查询真实名称并使用 gear，不能静默空白", "不混 Lucide、emoji 或 rough 化原始路径", "标题和图标轻微 boil，字幕稳定", "所有动效由同一个可 seek 的有限时间轴驱动"]},
+    {"id": 4, "prompt": "这个旧 VideoHand 的 HW 卡片项目只修字幕，保持原风格。", "expectations": ["进入显式 legacy 模式", "不强制迁移旧项目", "不运行 Git sync、全局覆盖或旧自动推送 hook"]}
+  ],
+  "status": "Manual acceptance scenarios. No claim of a fresh-agent model benchmark run."
+}

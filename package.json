@@ -1,17 +1,14 @@
 {
   "name": "videohand",
-  "version": "2.1.0",
-  "description": "把一段文字做成纸面马克笔手绘风格的小视频 —— 64 张画面卡、rough.js 笔画原语、安全区与三画幅自适应。给 Claude Code / Codex / Cursor 等 agent 用的 skill。",
+  "version": "3.0.0",
+  "description": "Doodle-first hand-drawn explainer videos with Hyperframes, original Oreo icons, deterministic animation and dual-aspect layouts.",
   "keywords": [
-    "handdrawn",
-    "sketch",
+    "doodle",
     "video",
-    "animation",
-    "roughjs",
-    "gsap",
-    "claude-code",
+    "hyperframes",
     "agent-skill",
-    "hyperframes"
+    "handdrawn",
+    "gsap"
   ],
   "homepage": "https://derek-zhuolin.github.io/VideoHand/",
   "bugs": "https://github.com/derek-zhuolin/VideoHand/issues",
@@ -29,19 +26,24 @@
     "node": ">=22"
   },
   "files": [
-    "bin/",
-    "assets/",
-    "references/",
-    "scripts/",
-    "templates/",
-    "tools/",
+    "bin",
+    "assets",
+    "references",
+    "scripts",
+    "templates",
+    "tools",
+    "agents",
+    "examples/doodle",
+    "tests",
     "SKILL.md",
     "README.md",
     "README.zh-CN.md",
-    "LICENSE"
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
+    "evals/doodle-evals.json"
   ],
   "scripts": {
     "doctor": "node tools/doctor.mjs",
-    "playground": "node scripts/build-gallery.mjs"
+    "test": "node --test tests/*.test.mjs"
   }
 }

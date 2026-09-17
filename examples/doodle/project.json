@@ -1,0 +1,16 @@
+{
+  "title": "让想法，慢慢成形。",
+  "subtitle": "从一个念头，到一次小小的行动",
+  "duration": 6,
+  "aspect": "both",
+  "nodes": [
+    {"icon": "bulb", "label": "一个想法", "at": 0.3},
+    {"icon": "pencil", "label": "画出步骤", "at": 2},
+    {"icon": "check", "label": "开始行动", "at": 3.7}
+  ],
+  "captions": [
+    {"start": 0.2, "end": 1.8, "text": "先留下一个念头"},
+    {"start": 2, "end": 3.6, "text": "再画出下一步"},
+    {"start": 3.8, "end": 5.7, "text": "让想法开始发生"}
+  ]
+}

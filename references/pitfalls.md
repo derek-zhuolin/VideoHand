@@ -1,3 +1,5 @@
+> LEGACY v2 reference. Apply only to existing HW card projects. Doodle projects use doodle-design.md, composition.md and audio.md.
+
 # 坑位全录
 
 每一条都是实测踩出来的，不是想象的。按「你会怎么中招」排。

@@ -1,3 +1,5 @@
+> LEGACY v2 reference. Apply only to existing HW card projects. Doodle projects use doodle-design.md, composition.md and audio.md.
+
 # 手绘转场家族 — 8 种
 
 > **先看这条**：下面的代码片段是**配方说明**，不是让你往每帧里抄的。

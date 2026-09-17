@@ -1,0 +1,6 @@
+interface:
+  display_name: "VideoHand · Doodle"
+  short_description: "Doodle 手绘讲解视频，支持配音字幕与横竖屏独立构图"
+  default_prompt: "使用 $videohand 把我的内容制作成 Doodle 手绘讲解视频，并验证画面、配音和字幕。"
+policy:
+  allow_implicit_invocation: false

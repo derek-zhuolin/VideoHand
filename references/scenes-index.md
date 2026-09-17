@@ -1,3 +1,5 @@
+> LEGACY v2 reference. Apply only to existing HW card projects. Doodle projects use doodle-design.md, composition.md and audio.md.
+
 # 选卡查表 · 63 张
 
 一句话一张卡。**先判断这句话是什么形状，再查这张表**——不是先看图好不好看。
