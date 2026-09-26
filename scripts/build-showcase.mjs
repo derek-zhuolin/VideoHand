@@ -3,6 +3,7 @@ import {readFileSync,writeFileSync,mkdirSync,readdirSync,copyFileSync} from 'nod
 import {resolve,join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const ICON_FIRST=`<article class="work" data-kind="presenter" id="icon-first-study"><div class="work-media"><video class="vertical-video" controls muted playsinline preload="none" poster="assets/icon-first-study.jpg" src="assets/icon-first-study.mp4" aria-label="Icon 优先：复用、受阻与补画的 20 秒中性无声示例"></video></div><div class="work-info"><span class="overline">3.3 / Icon first</span><h3>让 Icon 讲意思，人物陪着讲。</h3><p>同一个拼图在工具间复用，锁扣合让行动受阻，铅笔沿着线条补出新画面。一次一个主角，靠动作接续表达；人物常驻右下，关键句短暂居中并保留解释动作。</p><span class="tag">20 秒 · 无声研究 · 手绘人物占位</span><p style="margin-top:14px"><a class="text-link" href="https://github.com/derek-zhuolin/VideoHand/tree/main/examples/icon-first">查看可编辑工程与构建说明 ↗</a></p><p style="margin-top:12px">白底、原版 Oreo Icon、Xiaolai 字幕与杏仁色笔触。通用示例不含私人影像或原声。</p></div></article>`;
 const MOTION_STUDY=`<article class="work" data-kind="story" id="object-motion-study"><div class="work-media"><video class="vertical-video" controls muted playsinline preload="none" poster="assets/object-motion-study.jpg" src="assets/object-motion-study.mp4" aria-label="同一批记录从口述到成稿的 14.2 秒无声动作研究"></video></div><div class="work-info"><span class="overline">3.2 / Object motion study</span><h3>同一批记录，接着发生。</h3><p>口述 → 归类 → 脱敏 → 成稿。记录错峰出现，带着加减速聚拢、遮去身份，再整理成笔记。镜头基本稳定，靠物件改变状态承接内容，避免用持续滚页代替动作。</p><span class="tag">14.2 秒 · 无声研究 · 9:16</span><p style="margin-top:14px"><a class="text-link" href="https://github.com/derek-zhuolin/VideoHand/tree/main/examples/motion-study">查看可编辑工程与构建说明 ↗</a></p><p style="margin-top:12px">独立 HTML 动作示例；没有私人语音或笔记，不代表 CLI 已内置 TTS 或任意动画生成。</p></div></article>`;
 export function buildShowcase(out=join(ROOT,'docs')) {
   const dest=resolve(out);mkdirSync(join(dest,'assets/showcase'),{recursive:true});
@@ -14,7 +15,7 @@ export function buildShowcase(out=join(ROOT,'docs')) {
   const version=JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).version.split('.').slice(0,2).join('.');
   const workGrid='<div class="masonry" id="work-grid">';
   if(!html.includes(workGrid))throw new Error('Missing showcase work-grid insertion point');
-  html=html.replace(workGrid,workGrid+'\n'+MOTION_STUDY)
+  html=html.replace(workGrid,workGrid+'\n'+ICON_FIRST+'\n'+MOTION_STUDY)
     .replace(/\d+\.\d+ \/ Doodle Director/,version+' / Doodle Director')
     .replace(/VideoHand \d+\.\d+ · Made for ideas/,`VideoHand ${version} · Made for ideas`);
   if(/\{\{/.test(html))throw new Error('Unresolved showcase placeholder');

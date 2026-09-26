@@ -1,15 +1,29 @@
-# VideoHand 3.2 · Doodle Director
+# VideoHand 3.3 · Icon First
 
 **用物件的动作解释内容，让同一个故事接着发生。**
 
-这是 VideoHand **3.2 源码升级版**。GitHub 源码可直接运行；本文不表示已发布 npm 包。使用白底、Oreo 原始涂鸦图标与原创 SVG 物件：Agent 先理解整段话，再决定让真人说、让图形解释，或让两者一起出现；HyperFrames 执行可复现的时间轴。无露脸 TTS 使用独立编写的 HTML 工程，当前录制口播 CLI 不直接接受纯音频。
+这是 VideoHand **3.3 源码升级版**。GitHub 源码可直接运行；本文不表示已发布 npm 包。使用白底、Oreo 原始涂鸦图标与原创 SVG 物件：Agent 先理解整段话，再决定让真人说、让图形解释，或让两者一起出现；HyperFrames 执行可复现的时间轴。无露脸 TTS 使用独立编写的 HTML 工程，当前录制口播 CLI 不直接接受纯音频。
 
 [![CI](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml/badge.svg)](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](./LICENSE)
 
-![VideoHand Director Preview：白底手绘物件与连续场景](examples/director/preview-landscape.png)
+![VideoHand 3.3：Icon 主导讲解，人物靠右下，关键句短暂居中](docs/assets/icon-first-overview.jpg)
 
 [竖屏预览图](examples/director/preview-portrait.png) · [瀑布流作品与图标墙](https://derek-zhuolin.github.io/VideoHand/) · [中文入口](README.zh-CN.md)
+
+## 3.3：画面克制，动作讲清楚
+
+一个主物件，最多两个辅助图形。人物以右下圆形小窗为主，关键句短暂居中时配合一个有意义的 Icon 动作。标题、主图和字幕分区清楚；手写字幕每句只划一个杏仁色关键词。去掉无语义用途的大纸张、底色椭圆和装饰曲线。
+
+[观看 20 秒公开示例](https://derek-zhuolin.github.io/VideoHand/#icon-first-study)：同一个拼图接入两种工具，工具遇锁受阻，铅笔沿实际路径补出图片。公开版本使用手绘人物占位和通用字幕，无声且不含私人素材。
+
+```bash
+node examples/icon-first/build.mjs --out ../icon-first-study
+hyperframes check ../icon-first-study --snapshots --json
+hyperframes render ../icon-first-study -w 1 -o ../icon-first-study.mp4
+```
+
+这是可编辑的 HTML 创作示例，已有录制口播 CLI 保持兼容。它没有新增自动语义分析、自动避让或 `presentation.preset` 枚举。使用规则见 [Icon 优先口播构图](references/icon-first-composition.md)，动作与边界见 [示例说明](examples/icon-first/README.md)。
 
 ## 3.2：让物件行动，不让页面代替动作
 
@@ -198,6 +212,7 @@ git diff --check
 - [references/director.md](references/director.md)：实际接口、schema、动作与限制。
 - [examples/director/](examples/director/)：可复现的无声视觉研究。
 - [examples/motion-study/](examples/motion-study/)：14 秒物件动作研究与独立 HTML 构建器。
+- [examples/icon-first/](examples/icon-first/)：20 秒 Icon 优先口播构图与沿路径补画示例。
 - [examples/doodle/](examples/doodle/)：兼容的 3.0 暖纸 starter。
 - [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)：原始图标、字体、依赖与原创扩展来源。
 

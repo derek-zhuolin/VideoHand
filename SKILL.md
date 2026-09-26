@@ -3,7 +3,7 @@ name: videohand
 description: 为已录制口播或获授权的无露脸 TTS 编排白底涂鸦风格离线解释视频。Agent 判断语义，用 Oreo 原始图标、连续 SVG 物件及必要时的真人 A-roll/B-roll，通过 HyperFrames 生成可编辑工程。支持横竖独立构图，保留旧暖纸 starter 与 HW 工程；用户明确调用 VideoHand 时使用。
 ---
 
-# VideoHand · Doodle Director 3.2
+# VideoHand · Doodle Director 3.3
 
 这是当前 GitHub 源码的创作约定。默认路线为**录制口播 → 语义计划 → 白底连续场景 → HyperFrames 工程与成片**。用户明确选择无露脸 TTS 时走下文的独立分支；不要把本 Skill 解释成实时摄像头或直播工具。
 
@@ -101,6 +101,14 @@ hyperframes render -w 1 -o renders/film.mp4
 新片需要本次升级风格时，设置 `presentation.preset: "framed"`。内画布为白色，浅灰白外底、等比留白、圆角与柔和阴影；`a` 主镜头填满内画布，`b-pip` 使用圆形人像和上移字幕。不要把正圆拉伸成椭圆。沿用现有工程时保持其配置，不强制改写旧计划。
 
 模板不自动找脸，`cropPosition` 是人工裁切参数，必须查看真实人物的头部、嘴和下巴。示例无源视频时只是构图研究。完整字段见 [导演工程](references/director.md)。
+
+### Icon 优先口播编排
+
+用户选择简洁 Icon 讲解、人物以右下小窗为主时，采用 [Icon 优先口播构图](references/icon-first-composition.md)。这是创作预设，不是新的 CLI `presentation.preset` 值；已有明确布局和本次用户指示优先，不为所有项目规定 A/B-roll 比例或切换秒数。
+
+以原版 Oreo Icon 为视觉主角，一镜一个表达：一个主物件，最多两个辅助图形。人物大部分时间在右下圆形小窗，关键判断短暂居中时配一个相关 Icon 动作；避免只有人像、大片空白与字幕的长时间停留。标题、主图和字幕分区清楚，字幕用 Xiaolai，每句最多一个来自原话的杏仁色 `#ECB775` 手绘关键词笔触。去掉无语义用途的大纸张、底色椭圆和装饰曲线。
+
+同一时刻简单，随时间丰富：同一物件承接下一动作，有因果的进入、受阻、连接或改变配合 easing 和错峰接力。不要通过堆图标、循环摆动、持续背景漂移或反复放大人物制造丰富度。渲染后在手机尺寸检查焦点、手绘笔触、字幕与人物避让，以及完整动作的前后衔接。
 
 本 Skill 不绑定模型厂商，读取 [模型兼容范围与通用提示词](references/model-compatibility.md)。不要把无 provider 依赖写成已经实测所有模型；不能执行本地工具的模型只能交付待执行计划。
 

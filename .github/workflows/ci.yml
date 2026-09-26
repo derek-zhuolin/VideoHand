@@ -42,3 +42,6 @@ jobs:
       - run: node examples/motion-study/build.mjs --out ../motion-study-smoke
       - run: hyperframes check ../motion-study-smoke --snapshots --json
       - run: hyperframes render ../motion-study-smoke --output ../motion-study.mp4 --workers 1
+      - run: node examples/icon-first/build.mjs --out ../icon-first-smoke
+      - run: hyperframes check ../icon-first-smoke --snapshots --json
+      - run: hyperframes render ../icon-first-smoke --output ../icon-first-study.mp4 --workers 1
