@@ -1,0 +1,55 @@
+{
+  "title": "让任务换个地方",
+  "subtitle": "同文案对照 · 旧版暖纸 starter",
+  "duration": 28,
+  "aspect": "landscape",
+  "nodes": [
+    {
+      "icon": "laptop",
+      "label": "任务堆积",
+      "at": 0.3
+    },
+    {
+      "icon": "clouds",
+      "label": "交给云端",
+      "at": 11.4
+    },
+    {
+      "icon": "check",
+      "label": "本地轻松",
+      "at": 21
+    }
+  ],
+  "captions": [
+    {
+      "start": 0.5,
+      "end": 4.3,
+      "text": "任务越来越多"
+    },
+    {
+      "start": 4.5,
+      "end": 9.3,
+      "text": "能承受的空间，却没有变"
+    },
+    {
+      "start": 10.1,
+      "end": 13,
+      "text": "换一处空间来处理"
+    },
+    {
+      "start": 13.2,
+      "end": 18.7,
+      "text": "把同一批任务交给云端"
+    },
+    {
+      "start": 20,
+      "end": 24,
+      "text": "工作还在继续"
+    },
+    {
+      "start": 24.2,
+      "end": 27.7,
+      "text": "眼前的电脑，轻松一点"
+    }
+  ]
+}

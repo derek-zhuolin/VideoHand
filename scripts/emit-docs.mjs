@@ -25,6 +25,7 @@ import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, existsSync
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
+import { buildShowcase } from './build-showcase.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, process.argv.filter((a) => !a.startsWith("--"))[2] || "docs");
@@ -224,7 +225,8 @@ function writeIfChanged(path, buf) {
   wrote++;
 }
 
-writeIfChanged(join(OUT, "index.html"), Buffer.from(built));
+writeIfChanged(join(OUT, "legacy.html"), Buffer.from(built));
+buildShowcase(OUT);
 if (ONLY !== "wall") {
   for (const name of names) writeIfChanged(join(OUT, "assets", "cards", name + ".png"), readFileSync(join(cardsDir, name + ".png")));
 }

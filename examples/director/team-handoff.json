@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "title": "把重复任务交出去",
+  "duration": 18,
+  "aspect": "landscape",
+  "source": null,
+  "theme": {
+    "background": "#FFFFFF",
+    "ink": "#2B2A33",
+    "accent": "#B9511D",
+    "wash": "#FAE6C9"
+  },
+  "beats": [
+    {
+      "id": "shared-load",
+      "start": 0,
+      "end": 4,
+      "spoken": "重复任务，也会占住团队的注意力。",
+      "meaning": "重复事务会占用团队的工作空间与注意力。",
+      "relation": "capacity",
+      "purpose": "explanation",
+      "visual": {
+        "value": "essential",
+        "detail": false,
+        "task": "让同一批任务逐步进入团队托盘，建立后续交接要追踪的物件身份。"
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "本例没有真人和原声；spoken 是演示文案，显式 b override 仅用于无声视觉研究，不代表已完成真人口播验收。用四张示意任务展示累积，不声称真实任务数量。"
+    },
+    {
+      "id": "shared-handoff",
+      "start": 4,
+      "end": 10,
+      "spoken": "把这些重复任务交给协作伙伴。",
+      "meaning": "把重复事务的执行交给协作伙伴，分工发生变化。",
+      "relation": "handoff",
+      "purpose": "explanation",
+      "visual": {
+        "value": "essential",
+        "detail": false,
+        "task": "让刚才出现的任务从团队托盘连续移动到协作伙伴托盘，保持原 id。"
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "显式 b override 仅用于无真人的视觉研究；保持两个托盘和任务在同一画面，观众能追踪归属变化，不切成新的卡片。"
+    },
+    {
+      "id": "keep-judgment",
+      "start": 10,
+      "end": 14,
+      "spoken": "关键判断，仍然由我们来做。",
+      "meaning": "执行可以交接，关键判断仍留在团队。",
+      "relation": "division",
+      "purpose": "explanation",
+      "visual": {
+        "value": "support",
+        "detail": false,
+        "task": "在团队一侧出现一个小灯泡，说明判断仍保留在这里；不新增或复制已交接任务。"
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "显式 b override 仅用于无真人的视觉研究；实际口播可重新判断是否回到真人。这里用一次轻强调说明关键判断的归属，不增加新的镜头。"
+    },
+    {
+      "id": "shared-result",
+      "start": 14,
+      "end": 18,
+      "spoken": "让分工清楚，合作才更顺畅。",
+      "meaning": "合作建立在清楚的执行分工和判断责任上。",
+      "relation": "conclusion",
+      "purpose": "conclusion",
+      "visual": {
+        "value": "none",
+        "detail": false
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "显式 b override 仅用于无真人的视觉研究；保留交接完成后的关系，停下来让观众看懂，不以持续运动填满结尾。"
+    }
+  ],
+  "objects": [
+    {
+      "id": "team",
+      "kind": "tray",
+      "icon": "users",
+      "label": "我们",
+      "position": {
+        "landscape": {"x": 550, "y": 550, "scale": 1},
+        "portrait": {"x": 540, "y": 720, "scale": 1}
+      },
+      "at": 0
+    },
+    {
+      "id": "partner",
+      "kind": "tray",
+      "icon": "users",
+      "label": "协作伙伴",
+      "position": {
+        "landscape": {"x": 1370, "y": 550, "scale": 1},
+        "portrait": {"x": 540, "y": 1290, "scale": 1}
+      },
+      "at": 0
+    },
+    {"id": "task-one", "kind": "task", "owner": "team", "slot": 0},
+    {"id": "task-two", "kind": "task", "owner": "team", "slot": 1},
+    {"id": "task-three", "kind": "task", "owner": "team", "slot": 2},
+    {"id": "task-four", "kind": "task", "owner": "team", "slot": 3},
+    {
+      "id": "judgment",
+      "kind": "icon",
+      "icon": "bulb",
+      "position": {
+        "landscape": {"x": 550, "y": 330, "scale": 0.4},
+        "portrait": {"x": 540, "y": 485, "scale": 0.4}
+      },
+      "at": 10.2
+    }
+  ],
+  "actions": [
+    {
+      "id": "gather-tasks",
+      "kind": "accumulate",
+      "at": 0.8,
+      "duration": 2,
+      "owner": "team",
+      "objects": ["task-one", "task-two", "task-three", "task-four"],
+      "meaning": "重复任务逐步进入团队的工作范围；数量是示意，不是统计。"
+    },
+    {
+      "id": "move-tasks",
+      "kind": "transfer",
+      "at": 5,
+      "duration": 2.8,
+      "from": "team",
+      "to": "partner",
+      "objects": ["task-one", "task-two", "task-three", "task-four"],
+      "meaning": "让同一批任务完成执行归属的交接，不消失后重建。"
+    },
+    {
+      "id": "keep-judgment-here",
+      "kind": "emphasis",
+      "at": 11.6,
+      "duration": 0.7,
+      "target": "judgment",
+      "meaning": "关键判断仍保留在团队一侧，只强调一次。"
+    }
+  ],
+  "captions": [
+    {"start": 0.5, "end": 4, "text": "重复任务，也会占住团队的注意力。", "key": "重复任务"},
+    {"start": 4, "end": 10, "text": "把这些重复任务交给协作伙伴。", "key": "协作伙伴"},
+    {"start": 10, "end": 14, "text": "关键判断，仍然由我们来做。", "key": "关键判断"},
+    {"start": 14, "end": 18, "text": "让分工清楚，合作才更顺畅。", "key": "分工清楚"}
+  ]
+}

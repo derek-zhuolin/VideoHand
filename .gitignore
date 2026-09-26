@@ -17,3 +17,8 @@ node_modules/
 
 # 跨片查重账本（scene-lint 自动维护，本机私有）
 .ledger.json
+
+# Private source materials stay outside the distributable repository
+private/
+recordings/
+transcripts/

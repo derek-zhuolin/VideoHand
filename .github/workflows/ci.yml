@@ -1,4 +1,4 @@
-name: VideoHand Doodle CI
+name: VideoHand Director and Doodle CI
 on:
   push:
     branches: [main]
@@ -25,9 +25,17 @@ jobs:
         with:
           node-version: '22'
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-      - run: npm install -g hyperframes@0.8.42
+      - run: npm install -g hyperframes@0.8.77
+      - run: npm test
       - run: node bin/videohand.mjs create --config examples/doodle/project.json --out ../doodle-smoke
       - run: hyperframes check ../doodle-smoke/landscape --snapshots --json
       - run: hyperframes check ../doodle-smoke/portrait --snapshots --json
       - run: hyperframes render ../doodle-smoke/landscape --output ../doodle-landscape.mp4 --fps 30 --quality high --workers 1
       - run: hyperframes render ../doodle-smoke/portrait --output ../doodle-portrait.mp4 --fps 30 --quality high --workers 1
+      - run: node bin/videohand.mjs compose --plan examples/director/capacity-handoff.json --out ../director-smoke
+      - run: hyperframes check ../director-smoke/landscape --snapshots --json
+      - run: hyperframes check ../director-smoke/portrait --snapshots --json
+      - run: hyperframes render ../director-smoke/landscape --output ../director-landscape.mp4 --workers 1
+      - run: node bin/videohand.mjs compose --plan examples/director/framed-presenter.json --out ../framed-smoke
+      - run: hyperframes check ../framed-smoke/landscape --snapshots --json
+      - run: hyperframes check ../framed-smoke/portrait --snapshots --json

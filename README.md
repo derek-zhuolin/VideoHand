@@ -1,124 +1,152 @@
-# VideoHand 3.0
+# VideoHand 3.1 · Doodle Director
 
-**把一段想法，画成一支会讲故事的手绘视频。**
+**把录好的口播，剪成有物件、有关系、有流动感的手绘解释视频。**
 
-VideoHand 是一个给 Agent 使用的手绘视频 Skill。它用 **Oreo Design / Doodle Icons** 做视觉基底，用 **Hyperframes** 做确定性渲染：先理解文案里的关系，再让同一组物件被画出、被标注、被移动和重新组合，最后交付可编辑工程与 MP4。
-
-> **Doodle 优先，旧版兼容。** 3.0 默认采用暖纸、墨线、Xiaolai 手写字幕、浅杏色关键词衬底和偶发框线；旧 VideoHand 的 HW 卡片工程仍可维护，但不再是新片的默认效果。
+这是 VideoHand **3.1 源码升级版**。GitHub 源码可直接运行；本文不表示已发布 npm 包。新路线使用白底、Oreo 原始涂鸦图标与原创 SVG 物件：Agent 先理解整段话，再决定让真人说、让图形解释，或让两者一起出现；HyperFrames 执行可复现的时间轴。
 
 [![CI](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml/badge.svg)](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/videohand.svg)](https://www.npmjs.com/package/videohand)
-[![Node](https://img.shields.io/node/v/videohand.svg)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](./LICENSE)
 
-## 先看画面
+![VideoHand Director Preview：白底手绘物件与连续场景](examples/director/preview-landscape.png)
 
-- [在线预览墙](https://derek-zhuolin.github.io/VideoHand/)：浏览已有画面与横竖屏布局。
-- [横屏示例](examples/doodle/landscape.png) / [竖屏示例](examples/doodle/portrait.png)：查看 3.0 的纸面、字体、图标和字幕标尺。
-- [Doodle 设计与来源](references/doodle-design.md)：记录 GitHub Reference、字体、配色和使用边界。
+[竖屏预览图](examples/director/preview-portrait.png) · [瀑布流作品与图标墙](https://derek-zhuolin.github.io/VideoHand/) · [中文入口](README.zh-CN.md)
 
-## 它适合做什么片子
+## 今天的视觉升级
 
-它适合“内容里有关系、有顺序、有变化”的短视频：观点解释、知识拆解、产品介绍、教程、数据说明、会议复盘和创意提案。它会根据句子的形状来设计画面，而不是把每句话塞进同一张模板。
+![VideoHand 3.1 瀑布流展示页](docs/assets/showcase/overview.png)
 
-| 内容形状 | 适合的画面语言 | 适合的片子 |
-| --- | --- | --- |
-| 先后顺序、流程 | 箭头、节点、同一物件逐步移动 | 教程、产品流程、工作方法 |
-| 对照、取舍 | 两组物件、划掉、重新标注 | 观点片、方案比较、决策解释 |
-| 因果、层级 | 连接线、聚合、拆分 | 知识拆解、复盘、研究结论 |
-| 一个关键结论 | 留白、大字、单个原始图标 | 开场、转折、结尾 |
-| 数据与清单 | 少量数字、标签和局部框线 | 数据陈述、功能清单 |
+- **浮起的白色画布**：浅灰白外底、四周留白、轻圆角和柔和阴影。
+- **圆形人像**：图解为主时放在角落，个人判断时主镜头填满内画布；字幕保留独立空间。
+- **模型无绑定**：不同 Agent 共用计划与 CLI。[兼容边界和通用提示词](references/model-compatibility.md) 明确区分接口迁移与实际模型测试。
+- **瀑布流展示页**：[看画面、动效与 152 个原始图标](https://derek-zhuolin.github.io/VideoHand/)，可筛选类型、搜索图标名称、播放中性示例。
 
-## 实践组合
-
-VideoHand 把“内容结构”“视觉风格”“输出画幅”分开，所以可以组合使用。下面是几种可以直接拿来做的路线：
-
-| 路线 | 结构 | 视觉组合 | 适合场景 |
-| --- | --- | --- | --- |
-| Doodle 讲解 | 连续语义场景 | Oreo 原始图标 + 暖纸墨线 + Xiaolai 字幕 | 默认的知识、产品和观点视频 |
-| Doodle Hyperlapse | 节奏更快，物件持续变形或换位 | 同一主角贯穿，多处短促入场和退出 | 20 秒以内的抖音、Reels、短教程 |
-| 竖屏口播增强 | 旁白主线 + 右下角圆形画中画 | 留白字幕区 + 偶发关系框 | 真人口播、知识分享、直播切片 |
-| Reference B-roll | 主线场景中插入几秒图标或关系图 | Doodle 图标墙、局部放大、手绘标注 | 产品展示、案例说明、转场呼吸 |
-| 兼容模式 | 旧版 HW 卡片工程 | 原有卡片、布局和工程思维 | 维护已有 VideoHand 项目 |
-
-### 默认视觉规则
-
-- 暖纸 `#F7F6F2`、墨色 `#2B2A33`，每幕只保留 1–2 个强调色。
-- 优先使用 152 个 Oreo SVG；不混入其他图标库或 emoji。
-- 中文字幕默认 Xiaolai；关键词使用浅杏色 `#ECB775` 手绘笔触承托，每句最多一个关键词。
-- 框线是偶发的语义容器，只在对照、关系或 Reference 素材需要时出现。
-- 16:9 使用 `1920×1080`，9:16 使用 `1080×1920`；横竖屏分别构图，字幕固定在安全区。
-
-## Reference：为什么选 Doodle
-
-3.0 的视觉基准来自 [oreo-design/doodle-icons](https://github.com/oreo-design/doodle-icons)，整体设计参考 [Oreo Doodle Icons](https://oreoui.com/doodle-icons)。仓库内的 [doodle-design.md](references/doodle-design.md) 把来源、图标、字体、配色和动画约束写成可复用的 reference；这意味着“手绘感”来自一套可追溯的设计系统，而不是临时给旧卡片加滤镜。
-
-工程上继续借鉴旧 VideoHand 的长处：语义选场景、连续构图、固定安全区、可编辑 HTML、确定性时间轴和渲染前检查。Hyperframes 负责把这些画面按一条暂停的 GSAP timeline 变成可复现的关键帧。
-
-## 工作原理
-
-```text
-文案 / 笔记 / SRT
-        ↓
-识别每句话的关系：流程、对照、因果、结论
-        ↓
-选择 Oreo 图标与连续场景，安排字幕、B-roll 和偶发框线
-        ↓
-用一条确定性的 Hyperframes 时间轴生成关键帧
-        ↓
-检查画面、安全区、字幕、音频与最后一秒
-        ↓
-MP4 + 可编辑工程 + 分镜记录
-```
-
-Agent 会替你处理场景选择、横竖屏构图、字幕安全区、音画对齐和渲染检查；你只需要提供内容，以及希望保留的节奏、风格、素材和声音。
-
-## 安装与快速开始
-
-需要预先安装 Node.js ≥ 22、Hyperframes、ffmpeg 和 ffprobe。Skill 本身不绑定模型、TTS 厂商、私人音色或个人笔记。
+新计划加入 `"presentation": {"preset": "framed"}` 即可使用这套视觉设置。旧计划保持原布局。
 
 ```bash
-npx github:derek-zhuolin/VideoHand
-
-# 安装后自检
-node bin/videohand.mjs doctor
-
-# 查看一个原始图标
-node bin/videohand.mjs icons arrow
-
-# 从中性示例创建可编辑工程
-node bin/videohand.mjs create \
-  --config examples/doodle/project.json \
-  --out ../my-doodle-film
+node bin/videohand.mjs compose --plan examples/director/framed-presenter.json --out ../framed-study
 ```
 
-在 Agent 中明确调用 `$videohand`，然后直接给它文案、受众、时长、画幅、配音和参考素材。例如：
+这个中性示例没有真人媒体，用于检查构图；接入自己的口播见下方流程。公开页面的人像位置用原创手绘角色表示。
 
-> 用 VideoHand 3.0 把这段内容做成 20 秒竖屏 Doodle Hyperlapse。字幕偏上，关键词用浅杏色笔触，每一幕只保留一个重点，中间插入两次 Oreo 图标 B-roll，最后保留一个简洁落版。
+## 连续画面怎么表达
 
-Agent 会按真实音频时长排分镜；没有配音时，也可以先做无声工程，再补 Volcengine 或其他已获授权的 TTS。字幕要对齐真实音频，不能只按估算字数切镜头。
+同一批任务先堆进电脑，再移入云端；电脑恢复轻松，任务仍然是刚才那一批。团队协作也可以用同一种语法：把重复任务交给伙伴，把关键判断留在自己这边。
 
-## 交付什么
+画面表达一句话背后的**意思和关系**。关键词只帮助定位动作或强调原话，不负责按词配图。流动感来自物件身份、因果过程和恰当停留，而不是每句话清空画面或持续堆叠动画。
 
-- MP4 成片：16:9、9:16，或两种画幅各自构图。
-- 可编辑工程：每个 composition 都能单独调整，不需要从头重做整片。
-- 分镜与来源记录：包括图标、字体、音频提供方和已知限制，不包含秘密。
-- 关键帧检查、Hyperframes 检查和渲染记录。
+| 无声视觉研究 | 可编辑计划 | 视频 |
+| --- | --- | --- |
+| 28 秒：容量与任务交接 | [capacity-handoff.json](examples/director/capacity-handoff.json) | [横屏](docs/assets/director/capacity-landscape.mp4) / [竖屏](docs/assets/director/capacity-portrait.mp4) |
+| 18 秒：团队交接与保留判断 | [team-handoff.json](examples/director/team-handoff.json) | [横屏](docs/assets/director/team-landscape.mp4) |
 
-## 二创与扩展
+这两支研究没有本人视频、录音或真实转录，文案是演示内容，不能作为真人口播或声画同步的黄金样例。合成影音测试只验证技术链路。本地已完成一份录制口播的竖屏样片检查；私人视频、原声与转录不公开。
 
-欢迎基于这个 Skill 做二创：
+[同内容新旧对照](examples/director/README.md)：旧 starter 与新连续场景使用相同标题、28 秒时长、字幕和字幕时间。可直接观看 [旧版](docs/assets/director/capacity-starter.mp4) / [新版](docs/assets/director/capacity-landscape.mp4)。
 
-1. Fork 仓库，复制 `examples/doodle/project.json`，先改文案、时长和画幅。
-2. 新增场景时，优先复用 Oreo 原始 SVG 和 `references/` 中的设计约束；找不到合适的图标，就登记一个明确的定制图形，不要偷偷混入别的图标库。
-3. 可以替换字体、强调色、字幕位置和 B-roll 组合，但请在自己的 README 中写清改动，并保留第三方许可和来源。
-4. 可以把这个 Skill 接到自己的 Agent、TTS 或素材工作流中；不要把密钥、私有音色和个人笔记提交到仓库。
+## 已实现与当前边界
 
-旧工程请阅读 [legacy-workflow.md](references/legacy-workflow.md)；新片不要加载旧 HW 卡片，除非你明确需要兼容原有项目。
+| 已实现的工程能力 | 当前边界 |
+| --- | --- |
+| 导入录制视频，探测真实时长，读取 SRT/VTT/JSON 转录 | ASR 未内置；CLI 不会自行识别语义或生成转录 |
+| Agent 写语义计划；CLI 校验并构建四种构图 | 语义判断依赖 Agent 通读全文和查看必要片段 |
+| 分层电脑、云、托盘、任务与 Oreo 图标；连续累积和交接 | 当前动作是有限组件库，不是任意动画生成器 |
+| 一个源视频保留原声；支持连续片段的起点和时长 | 不自动删除口误、拼接跳切、变速或混合多音轨 |
+| 横竖屏分别定位，导出 HyperFrames 工程 | 每个画幅仍要独立做浏览器碰撞、裁切和字幕检查 |
+| HTML 内局部修改标签、构图、动作时间并备份 | 不保证任意 Studio 编辑都能自动往返同步 |
 
-## 检查与质量
+当前 PiP 角落由计划指定，默认右下；还没有自动找脸、抠像、人物跟踪或智能选择空白角落。实时摄像头、流式语义响应和直播不在本次范围。
 
-提交或交付前至少运行：
+## 让什么占据主画面
+
+| 构图 | 使用依据 |
+| --- | --- |
+| `a` | 真人足以表达经历、态度、判断或总结 |
+| `a-support` | 真人主导，一处小注释能帮助理解 |
+| `b-pip` | 图形解释关系，真人的小窗仍提供表达价值 |
+| `b` | 图形细节需要整个画面，或真人此时没有新增价值 |
+
+Agent 为每段记录原话、核心意思、关系、视觉任务和选择理由。没有新的视觉需要就延续上一构图；没有固定 A/B-roll 比例或机械轮播。用户显式指定的构图优先。
+
+## 从当前源码运行
+
+需要 Node.js ≥ 22；媒体探测需要 ffprobe，影音制作需要 ffmpeg；预览、检查与渲染使用已安装的 HyperFrames。以下命令在当前仓库根目录执行，不依赖预览版已发布到包仓库。
+
+```bash
+node bin/videohand.mjs doctor
+node bin/videohand.mjs icons arrow
+
+node bin/videohand.mjs compose --plan examples/director/capacity-handoff.json --out ../capacity-study
+node bin/videohand.mjs compose --plan examples/director/team-handoff.json --out ../team-handoff-study
+```
+
+输出目录必须位于仓库／已安装 Skill 之外，且尚不存在。在输出的具体画幅目录运行：
+
+```bash
+hyperframes preview
+hyperframes check --snapshots --json
+hyperframes render -w 1 -o renders/film.mp4
+```
+
+### 接入自己的口播
+
+```bash
+node bin/videohand.mjs prepare --video /path/to/recording.mp4 --transcript /path/to/captions.srt --out ../talk-brief
+```
+
+`--transcript` 可省略，但省略不会触发自动 ASR。导入后，Agent 阅读 `DIRECTOR-BRIEF.md`、`source.json` 与已有 `transcript.json`，通读全文并编写 `director-plan.json`。SRT/VTT 是句级字幕，不能伪装成词级时间。
+
+给 Agent 的创作目标可以是：
+
+> 用 VideoHand 为这段已录制口播编排画面。保留原话里的限定条件和事实；按完整意思分段，不逐条字幕切镜头。优先用简洁的物件关系解释难点，真人是否出现取决于这一段的表达价值。白底、Oreo 涂鸦风格，同一物件保持身份。先写清每段 meaning、reason 和 visual.task，再构建工程。
+
+计划中 `source.path` 指向录制文件，`source.start` 为连续截取起点。所有段落、字幕与动作时间相对成片起点；截掉开头后需相应转换转录时间。
+
+```bash
+node bin/videohand.mjs compose --plan ../talk-brief/director-plan.json --out ../talk-film
+node bin/videohand.mjs inspect --html ../talk-film/landscape/index.html
+```
+
+完整 schema、动作参数和媒体边界见 [离线导演工程](references/director.md)。
+
+修正字幕、换物件、改品牌色以及新增组件的具体步骤见 [局部编辑与扩展](references/director-editing.md)。
+
+### 修改已经生成的工程
+
+每个画幅的 `index.html` 是后续编辑的权威来源；原始计划只用于首次生成，`DIRECTOR.md` 是当时的快照。不要反复 compose 来覆盖人工编辑。
+
+`revise` 支持 `label`、`layout` 和动作 `timing`。例如，将下面内容保存为 `changes.json`，调整团队示例的一次交接：
+
+```json
+[
+  {"type":"label","target":"partner","value":"协作伙伴"},
+  {"type":"timing","target":"move-tasks","at":5.2,"duration":2.6}
+]
+```
+
+```bash
+node bin/videohand.mjs revise --html ../team-handoff-study/landscape/index.html --changes ./changes.json
+node bin/videohand.mjs inspect --html ../team-handoff-study/landscape/index.html
+```
+
+修改前备份 HTML，修改后重新校验；其他人工 HTML/CSS 改动保留。横竖版分别修改和检查。更复杂的编辑直接在工程源码中进行，不宣称已具备完整的通用视频编辑器能力。
+
+## 视觉来源与旧版兼容
+
+- Director 默认白底 `#FFFFFF`、墨色 `#2B2A33`，辅以克制的强调色和浅色填充。
+- 保留 [Oreo Design / Doodle Icons](https://github.com/oreo-design/doodle-icons) 的 152 个原始 SVG，路径仍在 `assets/doodle/icons/`，不重新粗糙化或混入其他图标库。
+- 电脑、云、托盘和任务是 VideoHand 原创 SVG 扩展，沿用涂鸦轮廓与克制配色。它们与 Oreo 原图标分别登记来源，不冒称原图标库新增资产。
+- 标题、字幕和正文使用随包字体；缺字会在构建时提示。图标、字体、GSAP 随工程复制，避免依赖私人路径。
+- 16:9 为 1920×1080，9:16 为 1080×1920，横竖屏各自构图。
+
+旧 `create` 暖纸 starter 保持兼容：
+
+```bash
+node bin/videohand.mjs create --config examples/doodle/project.json --out ../my-doodle-film
+```
+
+[旧横屏标尺](examples/doodle/landscape.png) / [旧竖屏标尺](examples/doodle/portrait.png) · [Doodle 来源参考](references/doodle-design.md) · [旧 HW 工程流程](references/legacy-workflow.md)。旧暖纸配色与卡片工程不是 Director Preview 的默认视觉。
+
+## 验证与交付
 
 ```bash
 npm test
@@ -126,21 +154,28 @@ npm run doctor
 git diff --check
 ```
 
-每个输出画幅还应运行 `hyperframes check <composition> --snapshots --json`，检查关键帧、字幕安全区、入场与退出、最后一秒和实际音频。完整规则见 [quality.md](references/quality.md)；音频接口见 [audio.md](references/audio.md)；安装和迁移见 [portability.md](references/portability.md)。
+测试检查媒体时间、语义计划约束、任务身份与归属、构建和局部修改。它们不能替代观看成片。每个画幅还要检查实际运动、画面碰撞、PiP 遮挡、字幕可读性、最后一秒和原声同步。未接入真实口播时，必须保留“无声视觉研究／技术测试”的状态，不把生成成功写成真人验收通过。
+
+本次实际结果见 [验证记录](references/validation.md)：包含通用视觉配置、独立安装构建、浏览器检查与本地私人样片的验证边界。
+
+交付包含 MP4、可编辑工程、来源与许可、已完成的验证和仍未完成的部分。原始本人素材不默认提交或公开。更多参考：[验收标准](references/quality.md)、[音频](references/audio.md)、[安装与迁移](references/portability.md)。
 
 ## 欢迎点星，也欢迎定制开发
 
-如果 VideoHand 帮你做出了片子，欢迎在 GitHub 上 [点 Star](https://github.com/derek-zhuolin/VideoHand)。你也可以提交 Issue、Pull Request 或自己的风格参考：Doodle 组件、字幕系统、Hyperframes 动画和旧工程迁移都欢迎贡献。
+如果 VideoHand 帮你做出了片子，欢迎在 GitHub 上 [点 Star](https://github.com/derek-zhuolin/VideoHand)。也欢迎提交 Issue、Pull Request、风格参考与可复现的工程问题。
 
-如果你需要一套专属的 Agent Skill——例如品牌色、固定片头、自己的 TTS、行业图标、自动从 Obsidian 取稿，或者一套团队可复用的剪辑规范——可以联系定制开发：
+需要品牌风格、行业物件或自己的 Agent 工作流，可通过仓库 Issue 描述需求。
 
-**微信：`zhuolin25`**
+## 目录与许可
 
-## 目录
+- [SKILL.md](SKILL.md)：给 Agent 的创作与交付约定。
+- [references/director.md](references/director.md)：实际接口、schema、动作与限制。
+- [examples/director/](examples/director/)：可复现的无声视觉研究。
+- [examples/doodle/](examples/doodle/)：兼容的 3.0 暖纸 starter。
+- [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)：原始图标、字体、依赖与原创扩展来源。
 
-- [SKILL.md](SKILL.md)：给 Agent 读取的创作流程。
-- [references/](references/)：设计、构图、音频、质量、迁移与场景索引。
-- [examples/doodle/](examples/doodle/)：可复制的 3.0 中性示例。
-- [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)：图标、字体和依赖的许可说明。
+VideoHand 源码采用 [MIT](LICENSE)；第三方图标、字体和依赖以各自许可证为准。版本号对应 GitHub 源码；第三方平台与 npm 的发布状态独立。
 
-VideoHand 以 MIT 发布；第三方图标、字体和依赖仍以各自许可证为准。
+## 维护展示页
+
+在源码仓库运行 `npm run showcase`，从 `templates/showcase.html` 和原始 Oreo SVG 生成 `docs/index.html`。公开视频与海报保存在 `docs/assets/director/`；不复制用户影片。`docs/legacy.html` 保留旧组件墙。页面本身无在线模型调用、账户登录或素材上传。

@@ -10,7 +10,7 @@
 
 ## v2 → v3
 
-- 名称保留 videohand，版本 3.0.0；默认入口变成 Doodle。
+- 名称保留 videohand，版本 3.1.0；默认入口变成 Doodle。
 - 原 hw-kit.js、hw-cards.js、hw-trans.js 与 make-frame.mjs 等留作兼容，不改已经生成的旧工程。
 - 旧 palette/layout/scene-lint 只在 legacy 模式生效。新参考为 doodle-design / composition / quality。
 - 原 SKILL 归档于 legacy-workflow.md，仅供旧项目；其中旧安装、自动同步命令已经停用。原目录其他历史资料不是 v3 默认工作流。
@@ -20,3 +20,7 @@
 ## 扩展点
 
 增加新构图优先扩展场景组件和测试，不膨胀主 SKILL；新增图标登记来源，不伪装成 Oreo 原图标。换 TTS 遵循 audio.md；新品牌用主题 token，不改每个 path。只把已复验的经验写成通用规则，样片文案与音色永远属于具体项目。
+
+## 跨模型
+
+模型通过通用 JSON 计划和本地 CLI 接入，不要求特定 provider。宿主能力、实际验证边界和通用提示词见 [model-compatibility.md](model-compatibility.md)。源码分发不包含用户本人影像、转录、私人路径或服务凭证。

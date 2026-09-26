@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "title": "让任务换个地方",
+  "duration": 28,
+  "aspect": "both",
+  "objects": [
+    {
+      "id": "local",
+      "kind": "laptop",
+      "label": "我的电脑",
+      "at": 0,
+      "position": {
+        "landscape": {
+          "x": 560,
+          "y": 550,
+          "scale": 1.12
+        },
+        "portrait": {
+          "x": 540,
+          "y": 640,
+          "scale": 1.23
+        }
+      }
+    },
+    {
+      "id": "remote",
+      "kind": "cloud",
+      "label": "云端处理",
+      "at": 11.4,
+      "position": {
+        "landscape": {
+          "x": 1330,
+          "y": 500,
+          "scale": 1.04
+        },
+        "portrait": {
+          "x": 540,
+          "y": 1210,
+          "scale": 1.15
+        }
+      }
+    },
+    {
+      "id": "task-1",
+      "kind": "task",
+      "owner": "local",
+      "slot": 0
+    },
+    {
+      "id": "task-2",
+      "kind": "task",
+      "owner": "local",
+      "slot": 1
+    },
+    {
+      "id": "task-3",
+      "kind": "task",
+      "owner": "local",
+      "slot": 2
+    },
+    {
+      "id": "task-4",
+      "kind": "task",
+      "owner": "local",
+      "slot": 3
+    },
+    {
+      "id": "task-5",
+      "kind": "task",
+      "owner": "local",
+      "slot": 4
+    },
+    {
+      "id": "task-6",
+      "kind": "task",
+      "owner": "local",
+      "slot": 5
+    },
+    {
+      "id": "task-7",
+      "kind": "task",
+      "owner": "local",
+      "slot": 6
+    },
+    {
+      "id": "task-8",
+      "kind": "task",
+      "owner": "local",
+      "slot": 7
+    }
+  ],
+  "beats": [
+    {
+      "id": "capacity",
+      "start": 0,
+      "end": 10,
+      "spoken": "任务同时开得越来越多，电脑能承受的空间却没有变。",
+      "meaning": "有限容量承接过多任务会造成拥堵。",
+      "relation": "capacity",
+      "purpose": "explanation",
+      "visual": {
+        "value": "essential",
+        "task": "同一台电脑内任务不断累积，负载逐渐升高。",
+        "detail": false
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "当前为无原声视觉研究，使用 B-roll 单独展示：有限容量承接过多任务会造成拥堵。",
+      "keepObjects": [
+        "local"
+      ],
+      "anchors": [
+        {
+          "time": 4.5,
+          "text": "越来越多",
+          "action": "arrive-more"
+        },
+        {
+          "time": 7.5,
+          "text": "空间",
+          "action": "focus-pressure"
+        }
+      ]
+    },
+    {
+      "id": "handoff",
+      "start": 10,
+      "end": 21,
+      "spoken": "可以把这些任务交给云端，让另一处空间接过工作。",
+      "meaning": "任务改变处理位置，原处的负担随之减少。",
+      "relation": "handoff",
+      "purpose": "explanation",
+      "visual": {
+        "value": "essential",
+        "task": "同一批任务进入云端容器，本地负载下降。",
+        "detail": false
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "当前为无原声视觉研究，使用 B-roll 单独展示：任务改变处理位置，原处的负担随之减少。",
+      "keepObjects": [
+        "local",
+        "remote",
+        "task-1",
+        "task-2",
+        "task-3",
+        "task-4",
+        "task-5",
+        "task-6",
+        "task-7",
+        "task-8"
+      ],
+      "anchors": [
+        {
+          "time": 13.2,
+          "text": "交给云端",
+          "action": "handoff-tasks"
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "start": 21,
+      "end": 28,
+      "spoken": "任务还在继续，眼前这台电脑却轻松了。",
+      "meaning": "工作没有消失，只是由另一处承担。",
+      "relation": "comparison",
+      "purpose": "explanation",
+      "visual": {
+        "value": "essential",
+        "task": "保留两处容器与任务身份，停留在移交后的状态。",
+        "detail": false
+      },
+      "presenterAddsValue": false,
+      "layout": "b",
+      "reason": "当前为无原声视觉研究，使用 B-roll 单独展示：工作没有消失，只是由另一处承担。",
+      "keepObjects": [
+        "local",
+        "remote",
+        "task-1",
+        "task-2",
+        "task-3",
+        "task-4",
+        "task-5",
+        "task-6",
+        "task-7",
+        "task-8"
+      ],
+      "anchors": [
+        {
+          "time": 21,
+          "text": "轻松",
+          "action": "notice-result"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "arrive-first",
+      "kind": "accumulate",
+      "owner": "local",
+      "objects": [
+        "task-1",
+        "task-2",
+        "task-3",
+        "task-4"
+      ],
+      "at": 1.5,
+      "duration": 2.6,
+      "meaning": "有限空间中开始累积任务"
+    },
+    {
+      "id": "load-first",
+      "kind": "load",
+      "target": "local",
+      "amount": 0.45,
+      "at": 1.5,
+      "duration": 2.6,
+      "meaning": "示意负担随任务增加，不代表测量数据"
+    },
+    {
+      "id": "arrive-more",
+      "kind": "accumulate",
+      "owner": "local",
+      "objects": [
+        "task-5",
+        "task-6",
+        "task-7",
+        "task-8"
+      ],
+      "at": 4.5,
+      "duration": 2.4,
+      "meaning": "同一空间承接更多任务"
+    },
+    {
+      "id": "load-high",
+      "kind": "load",
+      "target": "local",
+      "amount": 0.92,
+      "at": 4.5,
+      "duration": 2.4,
+      "meaning": "容量压力增加的示意"
+    },
+    {
+      "id": "focus-pressure",
+      "kind": "focus",
+      "target": "local",
+      "scale": 1.13,
+      "at": 7.5,
+      "duration": 0.8,
+      "meaning": "引导注意拥堵状态"
+    },
+    {
+      "id": "see-both",
+      "kind": "focus",
+      "target": null,
+      "scale": 1,
+      "at": 10.5,
+      "duration": 0.9,
+      "meaning": "展开到两处处理空间"
+    },
+    {
+      "id": "handoff-tasks",
+      "kind": "transfer",
+      "to": "remote",
+      "objects": [
+        "task-1",
+        "task-2",
+        "task-3",
+        "task-4",
+        "task-5",
+        "task-6",
+        "task-7",
+        "task-8"
+      ],
+      "at": 13.2,
+      "duration": 4.1,
+      "meaning": "同一批任务从本地移交云端，不生成副本",
+      "from": "local"
+    },
+    {
+      "id": "remote-load",
+      "kind": "load",
+      "target": "remote",
+      "amount": 0.68,
+      "at": 13.2,
+      "duration": 4.1,
+      "meaning": "云端开始承担这些任务"
+    },
+    {
+      "id": "local-release",
+      "kind": "load",
+      "target": "local",
+      "amount": 0.12,
+      "at": 13.2,
+      "duration": 4.1,
+      "meaning": "移交后本地负担降低"
+    },
+    {
+      "id": "notice-result",
+      "kind": "emphasis",
+      "target": "local",
+      "at": 21,
+      "duration": 0.6,
+      "meaning": "提示观众检查本地负担降低的结果"
+    }
+  ],
+  "captions": [
+    {
+      "start": 0.5,
+      "end": 4.3,
+      "text": "任务越来越多"
+    },
+    {
+      "start": 4.5,
+      "end": 9.3,
+      "text": "能承受的空间，却没有变",
+      "key": "空间"
+    },
+    {
+      "start": 10.1,
+      "end": 13,
+      "text": "换一处空间来处理"
+    },
+    {
+      "start": 13.2,
+      "end": 18.7,
+      "text": "把同一批任务交给云端",
+      "key": "交给"
+    },
+    {
+      "start": 20,
+      "end": 24,
+      "text": "工作还在继续"
+    },
+    {
+      "start": 24.2,
+      "end": 27.7,
+      "text": "眼前的电脑，轻松一点"
+    }
+  ]
+}

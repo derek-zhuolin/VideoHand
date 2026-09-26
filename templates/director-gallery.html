@@ -1,0 +1,33 @@
+<!-- VIDEOHAND_DIRECTOR_START -->
+<style>
+#director-preview{max-width:1320px;margin:0 auto 72px;padding:48px 32px;background:#fff;color:#2b2a33;border-radius:20px;font-family:system-ui,sans-serif}
+#director-preview .vh-kicker{font-size:12px;letter-spacing:.22em;color:#a34d20;text-transform:uppercase}
+#director-preview h2{font-size:clamp(28px,4vw,48px);line-height:1.2;margin:18px 0;font-weight:600;letter-spacing:-.03em}
+#director-preview p{font-size:15px;line-height:1.8;max-width:850px;color:#68616c}
+#director-preview .vh-films{display:grid;grid-template-columns:1.6fr 1fr;gap:24px;margin-top:30px;align-items:start}
+#director-preview video{display:block;width:100%;background:#fff;border:1px solid #e8e5e1;border-radius:12px;aspect-ratio:16/9;object-fit:contain}
+#director-preview .vh-portrait{aspect-ratio:9/16;max-height:570px}
+#director-preview figure{margin:0}#director-preview figcaption{font-size:13px;line-height:1.7;margin-top:12px;color:#68616c}
+#director-preview .vh-team{margin-top:30px}#director-preview .vh-team video{max-width:750px}
+#director-preview details{margin-top:26px;border-top:1px solid #e8e5e1;padding-top:20px}
+#director-preview summary{cursor:pointer;font-size:14px}#director-preview .vh-before{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+#director-preview .vh-before img{width:100%;border-radius:8px}#director-preview a{color:#a34d20}
+@media(max-width:720px){#director-preview{padding:26px 18px}#director-preview .vh-films,#director-preview .vh-before{grid-template-columns:1fr}#director-preview .vh-portrait{max-height:540px}}
+</style>
+<section id="director-preview" aria-labelledby="director-title">
+  <div class="vh-kicker">VideoHand · Director Preview</div>
+  <h2 id="director-title">让同一个物件，把意思讲下去。</h2>
+  <p>白底、墨线、少量强调色。任务先累积，再交接，最后留下变化后的状态。原有 Oreo 图标继续使用，具体物件由可编辑 SVG 承接。</p>
+  <div class="vh-films">
+    <figure><video controls playsinline preload="metadata" poster="assets/director/capacity-landscape.png" src="assets/director/capacity-landscape.mp4"></video><figcaption>28 秒 · 电脑与云端 / 横屏。追踪同一批任务，镜头围绕“容量 → 交接 → 释放”展开。</figcaption></figure>
+    <figure><video class="vh-portrait" controls playsinline preload="metadata" poster="assets/director/capacity-portrait.png" src="assets/director/capacity-portrait.mp4"></video><figcaption>同一关系 / 独立竖屏构图。上下承接，字幕保留阅读空间。</figcaption></figure>
+  </div>
+  <figure class="vh-team"><video controls playsinline preload="metadata" poster="assets/director/team-landscape.png" src="assets/director/team-landscape.mp4"></video><figcaption>18 秒 · 团队协作。复用交接动作，表达“重复任务交出去，关键判断留下来”。</figcaption></figure>
+  <p>这三支影片都是无声视觉研究，文案为演示内容。公开素材不包含私人录像和原声；真人样片检查仅在本地保存。语义计划由 Agent 阅读上下文后编写；CLI 负责校验与构建。</p>
+  <details><summary>同一段内容，用旧 starter 和新连续场景分别表达</summary><p>两版均为「让任务换个地方」：28 秒，字幕文字、起止时间完全相同。旧版直接使用兼容 starter，新版使用连续物件工程；均为无声研究。</p><div class="vh-before">
+    <figure><video controls playsinline preload="metadata" poster="assets/director/capacity-starter.png" src="assets/director/capacity-starter.mp4"></video><figcaption>旧版暖纸 starter：用图标节点交代“任务堆积 → 云端 → 本地轻松”。没有修改旧引擎来制造对比。</figcaption></figure>
+    <figure><video controls playsinline preload="metadata" poster="assets/director/capacity-landscape.png" src="assets/director/capacity-landscape.mp4"></video><figcaption>新连续场景：观众能追踪同一批任务移交，以及两处容器状态的变化。两份源计划都在 examples/director 中。</figcaption></figure>
+  </div></details>
+  <p>源计划在仓库 <code>examples/director/</code>，构建与局部编辑说明见 <code>references/director.md</code>。下方保留旧版组件墙，方便维护已有工程。</p>
+</section>
+<!-- VIDEOHAND_DIRECTOR_END -->

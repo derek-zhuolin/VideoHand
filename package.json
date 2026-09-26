@@ -1,7 +1,7 @@
 {
   "name": "videohand",
-  "version": "3.0.0",
-  "description": "Doodle-first hand-drawn explainer videos with Hyperframes, original Oreo icons, deterministic animation and dual-aspect layouts.",
+  "version": "3.1.0",
+  "description": "Recorded A-roll and semantic doodle scenes: editable HyperFrames projects, original Oreo icons and continuous SVG objects.",
   "keywords": [
     "doodle",
     "video",
@@ -34,6 +34,7 @@
     "tools",
     "agents",
     "examples/doodle",
+    "examples/director",
     "tests",
     "SKILL.md",
     "README.md",
@@ -44,6 +45,7 @@
   ],
   "scripts": {
     "doctor": "node tools/doctor.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "showcase": "node scripts/build-showcase.mjs"
   }
 }
