@@ -1,6 +1,6 @@
 {
   "name": "videohand",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Recorded A-roll and semantic doodle scenes: editable HyperFrames projects, original Oreo icons and continuous SVG objects.",
   "keywords": [
     "doodle",
@@ -35,10 +35,12 @@
     "agents",
     "examples/doodle",
     "examples/director",
+    "examples/motion-study",
     "tests",
     "SKILL.md",
     "README.md",
     "README.zh-CN.md",
+    "CHANGELOG.md",
     "LICENSE",
     "THIRD-PARTY-NOTICES.md",
     "evals/doodle-evals.json"

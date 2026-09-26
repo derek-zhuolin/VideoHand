@@ -1,8 +1,8 @@
-# VideoHand 3.1 · Doodle Director
+# VideoHand 3.2 · Doodle Director
 
-**把录好的口播，剪成有物件、有关系、有流动感的手绘解释视频。**
+**用物件的动作解释内容，让同一个故事接着发生。**
 
-这是 VideoHand **3.1 源码升级版**。GitHub 源码可直接运行；本文不表示已发布 npm 包。新路线使用白底、Oreo 原始涂鸦图标与原创 SVG 物件：Agent 先理解整段话，再决定让真人说、让图形解释，或让两者一起出现；HyperFrames 执行可复现的时间轴。
+这是 VideoHand **3.2 源码升级版**。GitHub 源码可直接运行；本文不表示已发布 npm 包。使用白底、Oreo 原始涂鸦图标与原创 SVG 物件：Agent 先理解整段话，再决定让真人说、让图形解释，或让两者一起出现；HyperFrames 执行可复现的时间轴。无露脸 TTS 使用独立编写的 HTML 工程，当前录制口播 CLI 不直接接受纯音频。
 
 [![CI](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml/badge.svg)](https://github.com/derek-zhuolin/VideoHand/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](./LICENSE)
@@ -11,7 +11,18 @@
 
 [竖屏预览图](examples/director/preview-portrait.png) · [瀑布流作品与图标墙](https://derek-zhuolin.github.io/VideoHand/) · [中文入口](README.zh-CN.md)
 
-## 今天的视觉升级
+## 3.2：让物件行动，不让页面代替动作
+
+这一版修正了“连续画面”的创作规则：连续性来自同一物件的状态、因果变化与跨段接力，不是让一张长页面不停上移，也不是给每个图标套相同的摆动。
+
+- **动作有目的**：记录陆续出现、聚拢、遮去身份，再整理成笔记；每步都改变上一状态。
+- **节奏有承接**：物件起步、加速、减速落位，错峰交接；相机和需要阅读的文字可以稳定。
+- **先校对声音，再安排动作**：新增片头、重排段落、调整语速后，重新核对旁白、字幕与动作锚点。
+- **验证口径更准确**：重复帧检测用于定位可能的停帧，不能证明 easing 自然或视频好看；新风格先看 10–15 秒小样。
+
+[14 秒无声动作研究与构建说明](examples/motion-study/README.md) 提供可编辑 HTML，展示物件状态变化和接力。它没有私人语音或笔记，也不是 TTS 通用生成命令。详细创作约定见 [无露脸动作编排](references/continuous-noface.md)、[验收标准](references/quality.md) 和 [更新记录](CHANGELOG.md)。
+
+## 保留的白底视觉与展示页
 
 ![VideoHand 3.1 瀑布流展示页](docs/assets/showcase/overview.png)
 
@@ -53,6 +64,7 @@ node bin/videohand.mjs compose --plan examples/director/framed-presenter.json --
 | 一个源视频保留原声；支持连续片段的起点和时长 | 不自动删除口误、拼接跳切、变速或混合多音轨 |
 | 横竖屏分别定位，导出 HyperFrames 工程 | 每个画幅仍要独立做浏览器碰撞、裁切和字幕检查 |
 | HTML 内局部修改标签、构图、动作时间并备份 | 不保证任意 Studio 编辑都能自动往返同步 |
+| 独立 HTML 无露脸工作流与 14 秒动作研究 | `prepare/compose` 未内置纯音频输入、TTS 合成或任意物件变形 |
 
 当前 PiP 角落由计划指定，默认右下；还没有自动找脸、抠像、人物跟踪或智能选择空白角落。实时摄像头、流式语义响应和直播不在本次范围。
 
@@ -110,6 +122,18 @@ node bin/videohand.mjs inspect --html ../talk-film/landscape/index.html
 
 修正字幕、换物件、改品牌色以及新增组件的具体步骤见 [局部编辑与扩展](references/director-editing.md)。
 
+### 无露脸 TTS 与动作小样
+
+独立 TTS 片由作者将获授权的本地音频接入 HyperFrames HTML，并按实测音频时间编排字幕和物件动作。当前没有一条从任意文本自动生成该类成片的 CLI 命令；配音服务、音色授权与声画校对仍需单独处理。见 [音频接口](references/audio.md) 和 [无露脸动作编排](references/continuous-noface.md)。
+
+公共无声研究可以独立构建，用于修改和观察动作：
+
+```bash
+node examples/motion-study/build.mjs --out ../motion-study
+```
+
+这段研究采用同一组对象的状态变化、短时 easing 和错峰接力；不以常驻品牌栏、图标墙或匀速长画布作为开场与衔接。新风格先渲染 10–15 秒并正常速度观看，再扩展全片。私人的 TTS 音频、原始笔记和语音配置不随公共研究发布。
+
 ### 修改已经生成的工程
 
 每个画幅的 `index.html` 是后续编辑的权威来源；原始计划只用于首次生成，`DIRECTOR.md` 是当时的快照。不要反复 compose 来覆盖人工编辑。
@@ -154,7 +178,9 @@ npm run doctor
 git diff --check
 ```
 
-测试检查媒体时间、语义计划约束、任务身份与归属、构建和局部修改。它们不能替代观看成片。每个画幅还要检查实际运动、画面碰撞、PiP 遮挡、字幕可读性、最后一秒和原声同步。未接入真实口播时，必须保留“无声视觉研究／技术测试”的状态，不把生成成功写成真人验收通过。
+测试检查媒体时间、语义计划约束、任务身份与归属、构建和局部修改。它们不能替代观看成片。每个画幅还要检查实际运动、画面碰撞、PiP 遮挡、字幕可读性、最后一秒和声画同步。未接入真实口播或获授权 TTS 时，必须保留“无声视觉研究／技术测试”的状态，不把生成成功写成有声成片验收通过。
+
+`python3 tools/check-frame-motion.py film.mp4` 默认生成停帧与变化量诊断，只有显式 `--max-freeze-seconds` 才启用技术阈值。重复帧可能是有意的阅读停留，非重复帧也可能只是背景漂移；两者都需要结合内容判断。这个工具不做审美评分，也不替代逐段旁白与动作对照。
 
 本次实际结果见 [验证记录](references/validation.md)：包含通用视觉配置、独立安装构建、浏览器检查与本地私人样片的验证边界。
 
@@ -171,6 +197,7 @@ git diff --check
 - [SKILL.md](SKILL.md)：给 Agent 的创作与交付约定。
 - [references/director.md](references/director.md)：实际接口、schema、动作与限制。
 - [examples/director/](examples/director/)：可复现的无声视觉研究。
+- [examples/motion-study/](examples/motion-study/)：14 秒物件动作研究与独立 HTML 构建器。
 - [examples/doodle/](examples/doodle/)：兼容的 3.0 暖纸 starter。
 - [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)：原始图标、字体、依赖与原创扩展来源。
 

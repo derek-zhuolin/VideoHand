@@ -39,3 +39,6 @@ jobs:
       - run: node bin/videohand.mjs compose --plan examples/director/framed-presenter.json --out ../framed-smoke
       - run: hyperframes check ../framed-smoke/landscape --snapshots --json
       - run: hyperframes check ../framed-smoke/portrait --snapshots --json
+      - run: node examples/motion-study/build.mjs --out ../motion-study-smoke
+      - run: hyperframes check ../motion-study-smoke --snapshots --json
+      - run: hyperframes render ../motion-study-smoke --output ../motion-study.mp4 --workers 1
